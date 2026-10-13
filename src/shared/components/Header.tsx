@@ -31,7 +31,7 @@ export default function Header () {
             invisible opacity-0: 평소에는 보이지 않게 함
             group-hover:visible: 그룹에 마우스를 올리면 표시
             group-hover:opacity-100: 완전히 보이게 함
-            border-b shadow-sm: 본문과 구분되는 테두리와 그림자를 만듭니다.
+            border-b shadow-sm: 본문과 구분되는 테두리와 그림자를 만듬
         */}
         <div
             className="invisible absolute inset-x-0 top-full border-b bg-white
@@ -88,7 +88,7 @@ export default function Header () {
 
             <Image
                 src="/Logo.png" // public 폴더 기준의 이미지 경로
-                alt="SAN SAN GEAR"     // 이미지의 의미를 설명하는 대체 텍스트
+                alt="ONEPIECE"     // 이미지의 의미를 설명하는 대체 텍스트
                 fill                   // 부모 링크 영역을 채웁니다.
                 sizes="120px"          // 표시할 이미지 너비를 브라우저에 알림
                 className="object-contain" // 이미지 비율을 유지하며 영역 안에 맞춥니다.
