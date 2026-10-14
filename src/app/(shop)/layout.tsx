@@ -1,14 +1,16 @@
-import Header from "@/shared/components/Header";
+import Header from '@/shared/components/Header';
+import Footer from '@/shared/components/Footer';
 
 export default function ShopLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  return (
-    <>
-      <Header />
-      {children}
-    </>
-  );
+    return (
+        <>
+            <Header />
+            {children}
+            <Footer />
+        </>
+    );
 }
