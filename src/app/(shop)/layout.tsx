@@ -1,4 +1,4 @@
-import Header from "@/src/shared/components/Header";
+import Header from "@/shared/components/Header";
 
 export default function ShopLayout({
   children,
