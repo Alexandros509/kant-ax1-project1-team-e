@@ -39,7 +39,7 @@ export default function Header () {
                     group-hover:visible group-hover:opacity-100"
         >
             {/* 메뉴를 네 개의 열로 나누고 열 사이 간격 */}
-            <div className="grid grid-cols-4 gap-8">
+            <div className="grid grid-cols-5 gap-8">
             {/* flex-col: 메뉴를 세로로 배치 gap-3: 메뉴 사이에 간격. */}
             <div className="flex flex-col gap-3">
                 <p className="mb-2 text-neutral-400">SHOP</p>
@@ -49,32 +49,54 @@ export default function Header () {
             </div>
 
             <div className="flex flex-col gap-3">
+                <p className="mb-2 text-neutral-400">Outer</p>
+                <Link href="/" className="hover:underline">
+                Jackets
+                </Link>
+                <Link href="/" className="hover:underline">
+                Padding
+                </Link>
+                <Link href="/" className="hover:underline">
+                Coat
+                </Link>
+            </div>
+
+            <div className="flex flex-col gap-3">
                 <p className="mb-2 text-neutral-400">TOP</p>
-                <Link href="/products?category=t-shirts" className="hover:underline">
+                <Link href="/" className="hover:underline">
                 T-SHIRTS
                 </Link>
-                <Link href="/products?category=hoodies" className="hover:underline">
+                <Link href="/" className="hover:underline">
                 HOODIES
+                </Link>
+                <Link href="/" className="hover:underline">
+                Knit
                 </Link>
             </div>
 
             <div className="flex flex-col gap-3">
                 <p className="mb-2 text-neutral-400">BOTTOM</p>
-                <Link href="/products?category=pants" className="hover:underline">
-                PANTS
+                <Link href="/" className="hover:underline">
+                Pants
                 </Link>
-                <Link href="/products?category=shorts" className="hover:underline">
-                SHORTS
+                <Link href="/" className="hover:underline">
+                Denim
+                </Link>
+                <Link href="/" className="hover:underline">
+                Shorts
                 </Link>
             </div>
 
             <div className="flex flex-col gap-3">
-                <p className="mb-2 text-neutral-400">ACCESSORIES</p>
-                <Link href="/products?category=bags" className="hover:underline">
-                BAGS
+                <p className="mb-2 text-neutral-400">E.T.C</p>
+                <Link href="/" className="hover:underline">
+                Shoes
                 </Link>
-                <Link href="/products?category=headwear" className="hover:underline">
-                HEADWEAR
+                <Link href="/" className="hover:underline">
+                Bags
+                </Link>
+                <Link href="/" className="hover:underline">
+                Accessories
                 </Link>
             </div>
             </div>
