@@ -1,8 +1,14 @@
+'use client';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search } from 'lucide-react';
+import useCounterStore from '@/shared/store/useCounterStore';
 
 export default function Header() {
+    const totalQuantity = useCounterStore((state) =>
+        state.cartItems.reduce((total, item) => total + item.quantity, 0),
+    );
+
     return (
         <header className="fixed inset-x-0 bottom-0 z-50 w-full bg-black text-white">
             <div className="grid h-15 grid-cols-[1fr_auto_1fr] items-center px-5">
@@ -158,9 +164,7 @@ export default function Header() {
                     <Link href="/cart" className="flex items-center gap-3">
                         {/* span으로 장바구니 문구를 감싸며 수량과 별도 항목으로 배치함 */}
                         <span>CART</span>
-
-                        {/* 장바구니 수량을 표시하며 현재 숫자 0을 고정값으로 사용함 */}
-                        <span>0</span>
+                        <span>{totalQuantity}</span>
                     </Link>
                 </nav>
             </div>
