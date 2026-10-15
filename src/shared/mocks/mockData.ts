@@ -1,53 +1,115 @@
-// 카테고리 트리, 게시판 목록, 공용 파일 정보를 모의 데이터로 구성
+/**
+ * 상품 목록·상세 화면 개발에 사용하는 카테고리와 상품 목(mock) 데이터입니다.
+ * MOCK은 실제 API 응답을 대신하는 샘플이라는 뜻입니다.
+ * 상수 이름은 대문자와 밑줄로, 함수·상품 필드는 camelCase로 작성했습니다.
+ * FileInfo의 snake_case 필드는 기존 공용 파일 타입과 동일하게 유지합니다.
+ * 가격·소재·제조 정보·배송 정책은 화면 확인용이며 실제 판매 정보로 확정된 값이 아닙니다.
+ */
+// import type: 데이터 형태를 검사하는 타입만 가져오며 실행 시의 값은 가져오지 않습니다.
+// FileInfo는 파일 메타데이터, Product는 상품 객체의 필수 필드와 타입을 정의합니다.
 import type { FileInfo } from '@/domains/files/types/file.types';
 
 import type { Product } from '@/domains/products/types/product.types';
 
-// parentId가 null이면 대분류,
-// 값이 있으면 해당 대분류에 속하는 소분류입니다.
+/**
+ * MOCK_CATEGORIES: 여러 카테고리(CATEGORIES)를 담은 샘플 상수입니다.
+ * id: 카테고리 고유 번호. 상품의 categoryId가 이 번호를 참조합니다.
+ * name: 화면에 표시할 카테고리 이름입니다.
+ * parentId: 상위 카테고리의 id. null이면 대분류, 숫자이면 그 대분류의 소분류입니다.
+ * 예: COAT의 parentId: 1은 OUTER에 속한다는 뜻입니다.
+ * 현재 소분류는 대분류 번호를 앞에 붙인 11·12·21 등의 번호를 사용하지만,
+ * 실제 소속 관계는 번호의 자릿수가 아닌 parentId로 판단해야 합니다.
+ */
 export const MOCK_CATEGORIES = [
     // 대분류
     { id: 1, name: 'OUTER', parentId: null },
     { id: 2, name: 'TOP', parentId: null },
     { id: 3, name: 'BOTTOM', parentId: null },
+    { id: 4, name: 'E.T.C', parentId: null },
 
     // OUTER 소분류
     { id: 11, name: 'JACKET', parentId: 1 },
     { id: 12, name: 'COAT', parentId: 1 },
 
     // TOP 소분류
-    { id: 21, name: 'SHIRT', parentId: 2 },
+    { id: 21, name: 'T-SHIRT', parentId: 2 },
     { id: 22, name: 'SWEATER', parentId: 2 },
     { id: 23, name: 'HOODIE', parentId: 2 },
 
     // BOTTOM 소분류
     { id: 31, name: 'PANTS', parentId: 3 },
     { id: 32, name: 'DENIM', parentId: 3 },
+
+    // E.T.C 소분류
+    { id: 41, name: 'SHOES', parentId: 4 },
+    { id: 42, name: 'BAGS', parentId: 4 },
+    { id: 43, name: 'ACCESSORIES', parentId: 4 },
 ];
 
-// 상품 이미지의 공용 파일 정보를 생성합니다.
+/**
+ * createMockProductImage: 상품 이미지의 공용 파일 정보 객체를 만드는 함수입니다.
+ * create(생성) + Mock(샘플) + ProductImage(상품 이미지)라는 의미로 이름을 지었습니다.
+ * 반복되는 FileInfo 필드를 한곳에서 생성해 상품마다 같은 구조를 유지합니다.
+ * 실제 이미지를 생성·업로드하거나 파일을 읽는 함수는 아닙니다.
+ * public/products에 이미 존재하는 파일의 정보와 접근 주소를 반환합니다.
+ *
+ * @param id 이미지 파일의 고유 번호. 상품 id와 별개이며 전체 이미지에서 중복되면 안 됩니다.
+ * @param filename 확장자를 포함한 실제 파일명. 대소문자까지 public/products의 파일과 일치해야 합니다.
+ * @param fileSize 실제 파일 크기(바이트). file_size 메타데이터에 기록하며 화면 크기를 뜻하지 않습니다.
+ * @param location 이미지 용도. 생략하면 product_main(대표), 상세 이미지는 product_desc를 전달합니다.
+ * @param seq sequence(순서)의 약자. 상품 안에서 1부터 부여하며 생략하면 1입니다.
+ * @returns 공용 FileInfo 타입을 따르는 이미지 정보 객체입니다.
+ *
+ * 호출 예: createMockProductImage(1, 'outerCoatIvory.png', 1670384)
+ * → 대표 이미지, seq: 1로 생성합니다.
+ * 호출 예: createMockProductImage(101, 'outerCoatIvoryFront.png', 1384449, 'product_desc', 2)
+ * → 상세 이미지, seq: 2로 생성합니다.
+ * 파일명은 outer(대분류) + Coat(종류) + Ivory(색상) + Front(촬영 방향)처럼 구성했습니다.
+ * Model은 착용 사진, Detail은 부분 확대 사진을 뜻하며, 파일명 자체가 용도를 자동 판별하지는 않습니다.
+ */
 function createMockProductImage(
     id: number,
     filename: string,
     fileSize: number,
+    // 공용 FileInfo에 정의된 location 값만 허용하도록 타입을 재사용합니다.
+    location: FileInfo['location'] = 'product_main',
+    seq: number = 1,
 ): FileInfo {
     return {
+        // id는 id: id의 축약 표기입니다. location과 seq도 같은 방식입니다.
         id,
+        // gid는 공용 파일 타입의 문자열 식별자입니다. 여기서는 이미지 id로 목 값을 만듭니다.
         gid: `mock-product-${id}`,
-        location: 'product_main',
+        // location은 저장 경로가 아니라 대표/상세 등 파일의 사용 목적입니다.
+        location,
+        // 원본 파일명과 MIME 타입, 확장자, 바이트 크기입니다. 현재 목 이미지는 모두 PNG입니다.
         original_name: filename,
         content_type: 'image/png',
         extension: 'png',
         file_size: fileSize,
+        // 파일 준비가 완료된 목 상태입니다. 이 값이 실제 업로드를 수행하지는 않습니다.
         done: true,
-        seq: 1,
+        // 정렬에 사용할 순서 값입니다. 이 함수를 호출하는 것만으로 배열이 정렬되지는 않습니다.
+        seq,
+        // 생성일을 나타내는 고정 샘플 값(UTC)으로 실제 파일의 생성 시각은 아닙니다.
         created_at: '2026-09-01T00:00:00.000Z',
+        // Next.js는 public을 웹 주소의 루트(/)로 제공합니다. 주소에 /public은 붙이지 않습니다.
+        // 예: public/products/outerCoatIvory.png → /products/outerCoatIvory.png
+        // 백틱 문자열의 ${filename} 자리에 전달받은 파일명을 넣습니다.
         url: `/products/${filename}`,
     };
 }
 
+/**
+ * COMMON_PRODUCT_INFO: 여러 상품이 공유(COMMON)하는 상품 정보(PRODUCT_INFO)입니다.
+ * 상품마다 같은 안내 문구를 반복하지 않도록 묶었습니다.
+ * 각 상품의 ...COMMON_PRODUCT_INFO가 아래 필드들을 해당 상품 객체에 복사합니다.
+ * 같은 필드를 펼친 뒤에 다시 선언하면 뒤에 쓴 상품별 값으로 덮어쓸 수 있습니다.
+ */
 const COMMON_PRODUCT_INFO = {
+    // 현재 Product 타입에서 사용하는 숫자형 목 사이즈입니다. 실제 의류·신발 치수는 아닙니다.
     size: 1,
+    // productCare: 제조·보증·관리 안내. 백틱 문자열은 줄바꿈을 그대로 보존합니다.
     productCare: `Manufactured : Sep 2026
 Quality warranty : in accordance with applicable laws and consumer dispute resolution regulations
 
@@ -57,6 +119,7 @@ Quality warranty : in accordance with applicable laws and consumer dispute resol
 
 Made in China
 *세탁 및 관리 시 제품에 부착된 케어라벨의 취급 주의사항을 확인해 주시기 바랍니다.`,
+    // shipping: 배송 및 반품 안내를 함께 담은 공통 샘플 문구입니다.
     shipping: `Shipping
 배송 지역: 전국 (일부 지역 제외)
 택배사 : CJ대한통운 (1588-1255)
@@ -72,13 +135,33 @@ Returns
 *제주 및 도서·산간 지역 반품·교환 시 왕복 배송비 13,000원 부과`,
 };
 
+/**
+ * MOCK_PRODUCTS: 여러 상품(PRODUCTS)을 담은 샘플 상수입니다.
+ * export로 다른 파일에서 가져올 수 있으며 Product[]는 Product 객체의 배열이라는 뜻입니다.
+ * 상품을 추가할 때는 아래 객체 구조를 복사하고 고유 id와 카테고리·이미지·가격을 지정합니다.
+ * 기존 상품 id는 상세 페이지 주소(/products/1 등)에도 사용되므로 임의로 재번호를 매기지 않습니다.
+ *
+ * images는 문자열 주소 목록이 아니라 FileInfo 객체 목록입니다.
+ * 배열 안의 createMockProductImage(...)는 즉시 실행되고, 반환한 객체가 배열의 한 칸에 들어갑니다.
+ * 첫 칸에는 product_main 대표 이미지를, 그 뒤에는 product_desc 상세 이미지를 둡니다.
+ * 현재 ProductCard는 URL이 있는 첫 이미지를 선택하므로 대표 이미지를 첫 칸에 유지합니다.
+ * seq는 1, 2, 3...으로 배열 순서와 맞추되, 순서를 바꿀 때 배열과 seq를 함께 수정해야 합니다.
+ * 상세 화면은 location으로 이미지를 구분하고 필요하면 seq로 정렬해 표시하도록 구현할 수 있습니다.
+ * 이미지를 교체하면 filename과 fileSize를 갱신하고, 추가하면 중복되지 않는 이미지 id를 사용합니다.
+ */
 export const MOCK_PRODUCTS: Product[] = [
     {
+        // 공통 size·productCare·shipping을 현재 상품에 복사하는 펼침(spread) 문법입니다.
         ...COMMON_PRODUCT_INFO,
+        // 상품 고유 번호입니다. images 안에 전달하는 이미지 파일 id와는 다른 식별자입니다.
         id: 1,
+        // 카테고리 연결용 번호입니다. MOCK_CATEGORIES의 COAT(id: 12)를 참조합니다.
         categoryId: 12,
+        // 카드에 표시할 분류명으로 연결한 카테고리의 name과 일치시킵니다.
         categoryName: 'COAT',
-        name: '화이트 싱글 코트',
+        // 고객에게 보여 줄 상품명입니다. 이미지 파일명과는 별개입니다.
+        name: '아이보리 싱글 코트',
+        // detail은 상품의 텍스트 설명입니다. 상세 이미지(product_desc)와 구분합니다.
         detail: `Shell : Cotton 65%, Polyester 35%
 Lining : Polyester 100%
 
@@ -95,9 +178,80 @@ Lining : Polyester 100%
 - 밝은 색상으로 다양한 스타일에 활용하기 좋은 코트
 
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(1, 'outer-coat-white.png', 1670384)],
+        // 아래는 코트 하나의 이미지 9장입니다. 상세 컷을 별도 상품으로 등록하지 않습니다.
+        images: [
+            // 대표 1장: 목록 카드에 표시합니다. location과 seq는 기본값을 사용합니다.
+            createMockProductImage(1, 'outerCoatIvory.png', 1670384),
+            // 상세 2번: 상품 정면. 101~108은 대표 이미지 id와 중복되지 않도록 정한 파일 번호입니다.
+            createMockProductImage(
+                101,
+                'outerCoatIvoryFront.png',
+                1384449,
+                'product_desc',
+                2,
+            ),
+            // 상세 3번: 상품 뒷면.
+            createMockProductImage(
+                102,
+                'outerCoatIvoryBack.png',
+                1390721,
+                'product_desc',
+                3,
+            ),
+            // 상세 4번: 모델 착용 정면.
+            createMockProductImage(
+                103,
+                'outerCoatIvoryModelFront.png',
+                1618322,
+                'product_desc',
+                4,
+            ),
+            // 상세 5번: 모델 착용 측면.
+            createMockProductImage(
+                104,
+                'outerCoatIvoryModelSide.png',
+                1264801,
+                'product_desc',
+                5,
+            ),
+            // 상세 6번: 모델 착용 뒷면.
+            createMockProductImage(
+                105,
+                'outerCoatIvoryModelBack.png',
+                1535901,
+                'product_desc',
+                6,
+            ),
+            // 상세 7번: 칼라(목깃) 확대.
+            createMockProductImage(
+                106,
+                'outerCoatIvoryDetailCollar.png',
+                3573195,
+                'product_desc',
+                7,
+            ),
+            // 상세 8번: 커프스(소맷단) 확대.
+            createMockProductImage(
+                107,
+                'outerCoatIvoryDetailCuff.png',
+                2821359,
+                'product_desc',
+                8,
+            ),
+            // 상세 9번: 버튼과 밑단 확대.
+            createMockProductImage(
+                108,
+                'outerCoatIvoryDetailButtonHem.png',
+                2791551,
+                'product_desc',
+                9,
+            ),
+        ],
+        // listPrice: 할인 전 정가(원). salePrice보다 클 때 카드에서 취소선 가격으로 표시합니다.
         listPrice: 158000,
+        // salePrice: 실제 표시할 판매가(원). 할인하지 않는 상품은 listPrice와 같은 값을 둡니다.
         salePrice: 153260,
+        // new: 신상품 여부. true이면 카드에 NEW 표시를 붙이며 등록일로 자동 계산하지 않습니다.
         new: true,
     },
     {
@@ -105,7 +259,7 @@ Lining : Polyester 100%
         id: 2,
         categoryId: 22,
         categoryName: 'SWEATER',
-        name: '화이트 크루넥 스웨터',
+        name: '아이보리 크루넥 니트',
         detail: `Body : Cotton 60%, Acrylic 40%
 
 - Soft knit texture
@@ -120,7 +274,8 @@ Lining : Polyester 100%
 - 단독 착용과 레이어드에 모두 활용하기 좋은 스웨터
 
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(2, 'top-sweater-white.png', 2183822)],
+        // 대표 이미지 하나만 있는 상품입니다. 상세 컷이 생기면 첫 상품과 같은 방식으로 뒤에 추가합니다.
+        images: [createMockProductImage(2, 'topKnitIvory.png', 2183822)],
         listPrice: 78000,
         salePrice: 75660,
         new: true,
@@ -130,22 +285,12 @@ Lining : Polyester 100%
         id: 3,
         categoryId: 31,
         categoryName: 'PANTS',
-        name: '릴랙스드 데일리 팬츠',
-        detail: `Body : Cotton 98%, Polyurethane 2%
-
-- Relaxed straight fit
-- Comfortable stretch fabric
-- Front and back pockets
-
-본체: 면 98%, 폴리우레탄 2%
-
-- 여유로운 스트레이트 핏
-- 움직임이 편안한 신축성 있는 원단
-- 앞뒤 포켓 구성
-- 일상에서 편하게 착용할 수 있는 데일리 팬츠
+        name: '카키 카고 팬츠',
+        detail: `카키 컬러의 카고 팬츠입니다.
+측면 카고 포켓과 여유로운 실루엣이 특징입니다.
 
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(3, 'bottom.png', 1780930)],
+        images: [createMockProductImage(3, 'bottomPantsKhaki.png', 2122710)],
         listPrice: 68000,
         salePrice: 65960,
         new: false,
@@ -154,23 +299,13 @@ Lining : Polyester 100%
         ...COMMON_PRODUCT_INFO,
         id: 4,
         categoryId: 21,
-        categoryName: 'SHIRT',
-        name: '베이직 코튼 셔츠',
-        detail: `Body : Cotton 100%
-
-- Lightweight cotton fabric
-- Button-front closure
-- Curved hem for versatile styling
-
-본체: 면 100%
-
-- 가볍고 편안한 코튼 원단
-- 전면 버튼 여밈
-- 자연스럽게 떨어지는 곡선형 밑단
-- 단독 착용하거나 가벼운 아우터처럼 활용할 수 있는 셔츠
+        categoryName: 'T-SHIRT',
+        name: '블랙 반팔 티셔츠',
+        detail: `블랙 컬러의 반팔 티셔츠입니다.
+라운드 넥과 기본 실루엣으로 다양한 하의와 매치할 수 있습니다.
 
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(4, 'top-shirt.png', 1860241)],
+        images: [createMockProductImage(4, 'topTShirtBlack.png', 1860241)],
         listPrice: 58000,
         salePrice: 56260,
         new: true,
@@ -180,24 +315,12 @@ Lining : Polyester 100%
         id: 5,
         categoryId: 11,
         categoryName: 'JACKET',
-        name: '데일리 집업 자켓',
-        detail: `Shell : Nylon 100%
-Lining : Polyester 100%
-
-- Lightweight nylon shell
-- Full zip closure
-- Adjustable hem for a flexible fit
-
-겉감: 나일론 100%
-안감: 폴리에스터 100%
-
-- 가볍게 착용하기 좋은 나일론 소재
-- 전면 지퍼 여밈
-- 밑단 조절 디테일
-- 간절기 데일리 룩에 활용하기 좋은 집업 자켓
+        name: '블랙 집업 자켓',
+        detail: `블랙 컬러의 집업 자켓입니다.
+칼라와 전면 지퍼 여밈이 있는 디자인입니다.
 
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(5, 'outer.png', 1803092)],
+        images: [createMockProductImage(5, 'outerJacketBlack.png', 1803092)],
         listPrice: 118000,
         salePrice: 114460,
         new: true,
@@ -207,24 +330,12 @@ Lining : Polyester 100%
         id: 6,
         categoryId: 12,
         categoryName: 'COAT',
-        name: '클래식 울 블렌드 코트',
-        detail: `Shell : Wool 50%, Polyester 50%
-Lining : Polyester 100%
-
-- Warm wool-blend fabric
-- Classic collar design
-- Back vent for ease of movement
-
-겉감: 울 50%, 폴리에스터 50%
-안감: 폴리에스터 100%
-
-- 보온성을 높인 울 혼방 원단
-- 클래식한 칼라 디자인
-- 움직임을 편하게 하는 뒤트임
-- 차분한 스타일을 완성하는 데일리 코트
+        name: '차콜 싱글 코트',
+        detail: `차콜 컬러의 싱글 코트입니다.
+칼라와 전면 버튼 여밈이 있는 긴 기장의 디자인입니다.
 
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(6, 'outer-coat.png', 2190744)],
+        images: [createMockProductImage(6, 'outerCoatCharcoal.png', 2190744)],
         listPrice: 178000,
         salePrice: 172660,
         new: false,
@@ -234,22 +345,12 @@ Lining : Polyester 100%
         id: 7,
         categoryId: 31,
         categoryName: 'PANTS',
-        name: '와이드 코튼 팬츠',
-        detail: `Body : Cotton 100%
-
-- Wide-leg silhouette
-- Structured cotton fabric
-- Belt loops and zip fly closure
-
-본체: 면 100%
-
-- 여유롭게 떨어지는 와이드 실루엣
-- 형태를 안정적으로 잡아주는 코튼 원단
-- 벨트 고리와 지퍼 여밈
-- 셔츠와 스웨터에 자연스럽게 어울리는 팬츠
+        name: '블랙 와이드 팬츠',
+        detail: `블랙 컬러의 와이드 팬츠입니다.
+허리 주름과 여유롭게 떨어지는 실루엣이 특징입니다.
 
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(7, 'bottom-pants.png', 2122710)],
+        images: [createMockProductImage(7, 'bottomPantsBlack.png', 1780930)],
         listPrice: 72000,
         salePrice: 69840,
         new: true,
@@ -259,22 +360,12 @@ Lining : Polyester 100%
         id: 8,
         categoryId: 23,
         categoryName: 'HOODIE',
-        name: '릴랙스드 코튼 후디',
-        detail: `Body : Cotton 80%, Polyester 20%
-
-- Relaxed fit
-- Adjustable drawstring hood
-- Kangaroo pocket
-
-본체: 면 80%, 폴리에스터 20%
-
-- 편안한 릴랙스드 핏
-- 스트링으로 조절 가능한 후드
-- 전면 캥거루 포켓
-- 캐주얼한 데일리 스타일에 활용하기 좋은 후디
+        name: '그레이 풀오버 후디',
+        detail: `그레이 컬러의 풀오버 후디입니다.
+전면 캥거루 포켓과 소매 및 밑단 리브 마감이 특징입니다.
 
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(8, 'hood.png', 2473720)],
+        images: [createMockProductImage(8, 'topHoodieGray.png', 2473720)],
         listPrice: 89000,
         salePrice: 86330,
         new: true,
@@ -284,22 +375,12 @@ Lining : Polyester 100%
         id: 9,
         categoryId: 22,
         categoryName: 'SWEATER',
-        name: '베이직 니트 스웨터',
-        detail: `Body : Acrylic 50%, Wool 30%, Nylon 20%
-
-- Warm knit construction
-- Relaxed shoulder line
-- Ribbed neckline, cuffs and hem
-
-본체: 아크릴 50%, 울 30%, 나일론 20%
-
-- 따뜻하게 착용할 수 있는 혼방 니트
-- 자연스럽게 내려오는 어깨 라인
-- 목둘레, 소매와 밑단의 리브 마감
-- 셔츠 위에 겹쳐 입기 좋은 베이직 스웨터
+        name: '차콜 크루넥 니트',
+        detail: `차콜 컬러의 크루넥 니트입니다.
+목둘레, 소매와 밑단의 리브 마감이 특징입니다.
 
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(9, 'top-sweater.png', 2469728)],
+        images: [createMockProductImage(9, 'topKnitCharcoal.png', 2469728)],
         listPrice: 88000,
         salePrice: 85360,
         new: false,
@@ -309,25 +390,164 @@ Lining : Polyester 100%
         id: 10,
         categoryId: 32,
         categoryName: 'DENIM',
-        name: '스트레이트 데님 팬츠',
-        detail: `Body : Cotton 100%
+        name: '그레이 스트레이트 데님 팬츠',
+        detail: `그레이 컬러의 스트레이트 데님 팬츠입니다.
+워싱 디테일과 기본 포켓 구성이 특징입니다.
 
-- Classic straight fit
-- Five-pocket construction
-- Washed denim finish
-
-본체: 면 100%
-
-- 기본 스트레이트 핏
-- 클래식한 5포켓 구성
-- 자연스러운 워싱 디테일
-- 다양한 상의와 매치하기 좋은 데님 팬츠
-
-*데님 소재 특성상 밝은 색상의 의류에 이염될 수 있습니다.
 *제품 색상은 제품컷과 가장 유사합니다.`,
-        images: [createMockProductImage(10, 'bottom-jean.png', 2203207)],
+        images: [createMockProductImage(10, 'bottomDenimGray.png', 2203207)],
         listPrice: 82000,
         salePrice: 79540,
+        new: true,
+    },
+    // 신규 상품의 가격과 공통 상품 정보는 화면 확인용 목 데이터입니다.
+    {
+        ...COMMON_PRODUCT_INFO,
+        id: 11,
+        categoryId: 41,
+        categoryName: 'SHOES',
+        name: '블랙 더비 슈즈',
+        detail: `블랙 컬러의 레이스업 더비 슈즈입니다.
+
+*제품 색상은 제품컷과 가장 유사합니다.`,
+        images: [createMockProductImage(11, 'etcShoesDerbyBlack.png', 1799274)],
+        listPrice: 128000,
+        salePrice: 128000,
+        new: true,
+    },
+    {
+        ...COMMON_PRODUCT_INFO,
+        id: 12,
+        categoryId: 41,
+        categoryName: 'SHOES',
+        name: '아이보리 뮬',
+        detail: `아이보리 컬러의 뮬입니다.
+뒤가 트인 슬립온 디자인입니다.
+
+*제품 색상은 제품컷과 가장 유사합니다.`,
+        images: [createMockProductImage(12, 'etcShoesMulesIvory.png', 1819220)],
+        listPrice: 79000,
+        salePrice: 79000,
+        new: true,
+    },
+    {
+        ...COMMON_PRODUCT_INFO,
+        id: 13,
+        categoryId: 41,
+        categoryName: 'SHOES',
+        name: '블랙 스니커즈',
+        detail: `블랙 컬러의 레이스업 스니커즈입니다.
+
+*제품 색상은 제품컷과 가장 유사합니다.`,
+        images: [
+            createMockProductImage(13, 'etcShoesSneakersBlack.png', 2064583),
+        ],
+        listPrice: 99000,
+        salePrice: 99000,
+        new: true,
+    },
+    {
+        ...COMMON_PRODUCT_INFO,
+        id: 14,
+        categoryId: 42,
+        categoryName: 'BAGS',
+        name: '차콜 크로스바디 백',
+        detail: `차콜 컬러의 크로스바디 백입니다.
+
+*제품 색상은 제품컷과 가장 유사합니다.`,
+        images: [
+            createMockProductImage(14, 'etcBagsCrossbodyCharcoal.png', 1855919),
+        ],
+        listPrice: 69000,
+        salePrice: 69000,
+        new: true,
+    },
+    {
+        ...COMMON_PRODUCT_INFO,
+        id: 15,
+        categoryId: 42,
+        categoryName: 'BAGS',
+        name: '블랙 숄더백',
+        detail: `블랙 컬러의 숄더백입니다.
+곡선형 실루엣과 어깨끈이 특징입니다.
+
+*제품 색상은 제품컷과 가장 유사합니다.`,
+        images: [
+            createMockProductImage(15, 'etcBagsShoulderBlack.png', 1939576),
+        ],
+        listPrice: 89000,
+        salePrice: 89000,
+        new: true,
+    },
+    {
+        ...COMMON_PRODUCT_INFO,
+        id: 16,
+        categoryId: 42,
+        categoryName: 'BAGS',
+        name: '베이지 토트백',
+        detail: `베이지 컬러의 토트백입니다.
+긴 손잡이로 어깨에도 멜 수 있는 디자인입니다.
+
+*제품 색상은 제품컷과 가장 유사합니다.`,
+        images: [createMockProductImage(16, 'etcBagsToteBeige.png', 2013349)],
+        listPrice: 49000,
+        salePrice: 49000,
+        new: true,
+    },
+    {
+        ...COMMON_PRODUCT_INFO,
+        id: 17,
+        categoryId: 43,
+        categoryName: 'ACCESSORIES',
+        name: '블랙 벨트',
+        detail: `블랙 컬러의 버클 벨트입니다.
+
+*제품 색상은 제품컷과 가장 유사합니다.`,
+        images: [
+            createMockProductImage(17, 'etcAccessoriesBeltBlack.png', 1907925),
+        ],
+        listPrice: 39000,
+        salePrice: 39000,
+        new: true,
+    },
+    {
+        ...COMMON_PRODUCT_INFO,
+        id: 18,
+        categoryId: 43,
+        categoryName: 'ACCESSORIES',
+        name: '실버 체인 목걸이',
+        detail: `실버 컬러의 체인 목걸이입니다.
+
+*제품 색상은 제품컷과 가장 유사합니다.`,
+        images: [
+            createMockProductImage(
+                18,
+                'etcAccessoriesNecklaceSilver.png',
+                2064784,
+            ),
+        ],
+        listPrice: 29000,
+        salePrice: 29000,
+        new: true,
+    },
+    {
+        ...COMMON_PRODUCT_INFO,
+        id: 19,
+        categoryId: 43,
+        categoryName: 'ACCESSORIES',
+        name: '블랙 선글라스',
+        detail: `블랙 프레임과 어두운 렌즈의 선글라스입니다.
+
+*제품 색상은 제품컷과 가장 유사합니다.`,
+        images: [
+            createMockProductImage(
+                19,
+                'etcAccessoriesSunglassesBlack.png',
+                1649981,
+            ),
+        ],
+        listPrice: 49000,
+        salePrice: 49000,
         new: true,
     },
 ];
