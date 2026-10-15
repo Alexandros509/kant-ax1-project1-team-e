@@ -6,8 +6,7 @@ export default function Header() {
     return (
         <header className="fixed inset-x-0 bottom-0 z-50 w-full">
             <div className="grid h-8 grid-cols-[1fr_auto_1fr] items-center px-1">
-                {/* group: 버튼과 드롭다운 메뉴를 하나의 hover 영역으로 묶음
-            h-full: 헤더 아래까지 영역을 채워 마우스 이동 중 끊기지 않게 함 */}
+                {/* group: 버튼과 드롭다운 메뉴를 하나의 hover 영역으로 묶음 */}
                 <nav className="group flex h-full items-center text-[10px] font-semibold">
                     {/* 카테고리 버튼
             그룹에 마우스가 올라가면 검정 배경과 흰색 글자로 바뀝니다. */}
@@ -21,15 +20,15 @@ export default function Header() {
                     {/*
             absolute: 본문을 아래로 밀지 않고 그 위에 겹쳐 표시
             inset-x-0: header의 왼쪽부터 오른쪽 끝까지 펼침
-            top-full: header 바로 아래에 배치
 
             invisible opacity-0: 평소에는 보이지 않게 함
             group-hover:visible: 그룹에 마우스를 올리면 표시
             group-hover:opacity-100: 완전히 보이게 함
-            border-b shadow-sm: 본문과 구분되는 테두리와 그림자를 만듬
+            bottom-full: 하단 헤더 바로 위에 메뉴를 배치
+            border-t shadow-sm: 메뉴 위쪽 테두리와 그림자로 본문과 구분
         */}
-                    <div className="invisible absolute inset-x-0 bottom-full border-b bg-white px-6 py-8 text-xs opacity-0 shadow-sm group-hover:visible group-hover:opacity-100">
-                        {/* 메뉴를 네 개의 열로 나누고 열 사이 간격 */}
+                    <div className="invisible absolute inset-x-0 bottom-full border-t bg-white px-6 py-8 text-xs opacity-0 shadow-sm group-hover:visible group-hover:opacity-100">
+                        {/* 메뉴를 5 개의 열로 나누고 열 사이 간격 */}
                         <div className="grid grid-cols-5 gap-8">
                             {/* flex-col: 메뉴를 세로로 배치 gap-3: 메뉴 사이에 간격. */}
                             <div className="flex flex-col gap-3">
