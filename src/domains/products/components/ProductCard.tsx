@@ -8,7 +8,11 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-    const imageUrl = product.images.find((image) => image.url)?.url;
+    // 배열 순서가 달라져도 대표 이미지(product_main)만 썸네일로 사용합니다.
+    // 대표 이미지가 없거나 URL이 없으면 아래의 '이미지 준비 중' 상태를 표시합니다.
+    const imageUrl = product.images.find(
+        (image) => image.location === 'product_main' && image.url,
+    )?.url;
     const isDiscounted = product.salePrice < product.listPrice;
 
     return (

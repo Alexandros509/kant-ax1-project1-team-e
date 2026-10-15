@@ -2,49 +2,53 @@
  * 상품 목록·상세 화면 개발에 사용하는 카테고리와 상품 목(mock) 데이터입니다.
  * MOCK은 실제 API 응답을 대신하는 샘플이라는 뜻입니다.
  * 상수 이름은 대문자와 밑줄로, 함수·상품 필드는 camelCase로 작성했습니다.
- * FileInfo의 snake_case 필드는 기존 공용 파일 타입과 동일하게 유지합니다.
+ * Category와 FileInfo의 snake_case 필드는 기존 공용 타입과 동일하게 유지합니다.
  * 가격·소재·제조 정보·배송 정책은 화면 확인용이며 실제 판매 정보로 확정된 값이 아닙니다.
  */
 // import type: 데이터 형태를 검사하는 타입만 가져오며 실행 시의 값은 가져오지 않습니다.
-// FileInfo는 파일 메타데이터, Product는 상품 객체의 필수 필드와 타입을 정의합니다.
+// Category는 카테고리, FileInfo는 파일, Product는 상품 객체의 필드와 타입을 정의합니다.
+import type { Category } from '@/domains/categories/types/category.types';
 import type { FileInfo } from '@/domains/files/types/file.types';
 
 import type { Product } from '@/domains/products/types/product.types';
 
 /**
  * MOCK_CATEGORIES: 여러 카테고리(CATEGORIES)를 담은 샘플 상수입니다.
- * id: 카테고리 고유 번호. 상품의 categoryId가 이 번호를 참조합니다.
- * name: 화면에 표시할 카테고리 이름입니다.
- * parentId: 상위 카테고리의 id. null이면 대분류, 숫자이면 그 대분류의 소분류입니다.
- * 예: COAT의 parentId: 1은 OUTER에 속한다는 뜻입니다.
- * 현재 소분류는 대분류 번호를 앞에 붙인 11·12·21 등의 번호를 사용하지만,
- * 실제 소속 관계는 번호의 자릿수가 아닌 parentId로 판단해야 합니다.
+ * 공용 Category 타입을 기준으로 id와 parent_id를 모두 문자열로 통일합니다.
+ * 상품의 categoryId도 문자열로 저장하므로 ===로 직접 비교할 수 있습니다.
+ * parent_id가 null이면 대분류, 값이 있으면 해당 id의 상위 카테고리에 속합니다.
+ * 예: COAT의 parent_id: '1'은 OUTER에 속한다는 뜻입니다.
+ * depth는 이 목 데이터에서 대분류 0, 소분류 1로 사용합니다.
+ * sort_order는 같은 부모 안에서의 표시 순서이며 1부터 부여합니다.
+ * 실제 API의 depth·정렬 규칙이 확정되면 목 값도 그 규칙에 맞춰야 합니다.
+ * children은 공용 타입의 선택 필드로, 여기서는 parent_id로 연결한 평면 목록을 제공합니다.
+ * satisfies Category[]는 각 항목이 공용 카테고리 구조에 맞는지 컴파일 시 검사합니다.
  */
 export const MOCK_CATEGORIES = [
     // 대분류
-    { id: 1, name: 'OUTER', parentId: null },
-    { id: 2, name: 'TOP', parentId: null },
-    { id: 3, name: 'BOTTOM', parentId: null },
-    { id: 4, name: 'E.T.C', parentId: null },
+    { id: '1', name: 'OUTER', parent_id: null, depth: 0, sort_order: 1 },
+    { id: '2', name: 'TOP', parent_id: null, depth: 0, sort_order: 2 },
+    { id: '3', name: 'BOTTOM', parent_id: null, depth: 0, sort_order: 3 },
+    { id: '4', name: 'E.T.C', parent_id: null, depth: 0, sort_order: 4 },
 
     // OUTER 소분류
-    { id: 11, name: 'JACKET', parentId: 1 },
-    { id: 12, name: 'COAT', parentId: 1 },
+    { id: '11', name: 'JACKET', parent_id: '1', depth: 1, sort_order: 1 },
+    { id: '12', name: 'COAT', parent_id: '1', depth: 1, sort_order: 2 },
 
     // TOP 소분류
-    { id: 21, name: 'T-SHIRT', parentId: 2 },
-    { id: 22, name: 'SWEATER', parentId: 2 },
-    { id: 23, name: 'HOODIE', parentId: 2 },
+    { id: '21', name: 'T-SHIRT', parent_id: '2', depth: 1, sort_order: 1 },
+    { id: '22', name: 'SWEATER', parent_id: '2', depth: 1, sort_order: 2 },
+    { id: '23', name: 'HOODIE', parent_id: '2', depth: 1, sort_order: 3 },
 
     // BOTTOM 소분류
-    { id: 31, name: 'PANTS', parentId: 3 },
-    { id: 32, name: 'DENIM', parentId: 3 },
+    { id: '31', name: 'PANTS', parent_id: '3', depth: 1, sort_order: 1 },
+    { id: '32', name: 'DENIM', parent_id: '3', depth: 1, sort_order: 2 },
 
     // E.T.C 소분류
-    { id: 41, name: 'SHOES', parentId: 4 },
-    { id: 42, name: 'BAGS', parentId: 4 },
-    { id: 43, name: 'ACCESSORIES', parentId: 4 },
-];
+    { id: '41', name: 'SHOES', parent_id: '4', depth: 1, sort_order: 1 },
+    { id: '42', name: 'BAGS', parent_id: '4', depth: 1, sort_order: 2 },
+    { id: '43', name: 'ACCESSORIES', parent_id: '4', depth: 1, sort_order: 3 },
+] satisfies Category[];
 
 /**
  * createMockProductImage: 상품 이미지의 공용 파일 정보 객체를 만드는 함수입니다.
@@ -105,6 +109,7 @@ function createMockProductImage(
  * 상품마다 같은 안내 문구를 반복하지 않도록 묶었습니다.
  * 각 상품의 ...COMMON_PRODUCT_INFO가 아래 필드들을 해당 상품 객체에 복사합니다.
  * 같은 필드를 펼친 뒤에 다시 선언하면 뒤에 쓴 상품별 값으로 덮어쓸 수 있습니다.
+ * Pick으로 Product의 공통 필드 타입을 가져오고 satisfies로 구조를 검사합니다.
  */
 const COMMON_PRODUCT_INFO = {
     // 현재 Product 타입에서 사용하는 숫자형 목 사이즈입니다. 실제 의류·신발 치수는 아닙니다.
@@ -133,7 +138,7 @@ Returns
 처리 방식: 접수 후 영업일 내로 순차 진행 (지정 택배사 자동 수거)
 *반품 시 6,000원 차감 후 환불 처리 (오배송·불량은 해당 없음)
 *제주 및 도서·산간 지역 반품·교환 시 왕복 배송비 13,000원 부과`,
-};
+} satisfies Pick<Product, 'size' | 'productCare' | 'shipping'>;
 
 /**
  * MOCK_PRODUCTS: 여러 상품(PRODUCTS)을 담은 샘플 상수입니다.
@@ -143,9 +148,9 @@ Returns
  *
  * images는 문자열 주소 목록이 아니라 FileInfo 객체 목록입니다.
  * 배열 안의 createMockProductImage(...)는 즉시 실행되고, 반환한 객체가 배열의 한 칸에 들어갑니다.
- * 첫 칸에는 product_main 대표 이미지를, 그 뒤에는 product_desc 상세 이미지를 둡니다.
- * 현재 ProductCard는 URL이 있는 첫 이미지를 선택하므로 대표 이미지를 첫 칸에 유지합니다.
- * seq는 1, 2, 3...으로 배열 순서와 맞추되, 순서를 바꿀 때 배열과 seq를 함께 수정해야 합니다.
+ * 읽기 쉽도록 대표 이미지를 먼저 두지만, ProductCard는 배열 위치 대신 product_main으로 선택합니다.
+ * 대표 이미지에 URL이 없으면 상세 컷으로 대체하지 않고 이미지 준비 중 상태를 표시합니다.
+ * seq는 상품 내 표시 순서입니다. 표시 순서를 변경하려면 seq를 변경합니다.
  * 상세 화면은 location으로 이미지를 구분하고 필요하면 seq로 정렬해 표시하도록 구현할 수 있습니다.
  * 이미지를 교체하면 filename과 fileSize를 갱신하고, 추가하면 중복되지 않는 이미지 id를 사용합니다.
  */
@@ -155,8 +160,8 @@ export const MOCK_PRODUCTS: Product[] = [
         ...COMMON_PRODUCT_INFO,
         // 상품 고유 번호입니다. images 안에 전달하는 이미지 파일 id와는 다른 식별자입니다.
         id: 1,
-        // 카테고리 연결용 번호입니다. MOCK_CATEGORIES의 COAT(id: 12)를 참조합니다.
-        categoryId: 12,
+        // 카테고리 연결용 번호입니다. MOCK_CATEGORIES의 COAT(id: '12')를 참조합니다.
+        categoryId: '12',
         // 카드에 표시할 분류명으로 연결한 카테고리의 name과 일치시킵니다.
         categoryName: 'COAT',
         // 고객에게 보여 줄 상품명입니다. 이미지 파일명과는 별개입니다.
@@ -257,7 +262,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 2,
-        categoryId: 22,
+        categoryId: '22',
         categoryName: 'SWEATER',
         name: '아이보리 크루넥 니트',
         detail: `Body : Cotton 60%, Acrylic 40%
@@ -283,7 +288,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 3,
-        categoryId: 31,
+        categoryId: '31',
         categoryName: 'PANTS',
         name: '카키 카고 팬츠',
         detail: `카키 컬러의 카고 팬츠입니다.
@@ -298,7 +303,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 4,
-        categoryId: 21,
+        categoryId: '21',
         categoryName: 'T-SHIRT',
         name: '블랙 반팔 티셔츠',
         detail: `블랙 컬러의 반팔 티셔츠입니다.
@@ -313,7 +318,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 5,
-        categoryId: 11,
+        categoryId: '11',
         categoryName: 'JACKET',
         name: '블랙 집업 자켓',
         detail: `블랙 컬러의 집업 자켓입니다.
@@ -328,7 +333,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 6,
-        categoryId: 12,
+        categoryId: '12',
         categoryName: 'COAT',
         name: '차콜 싱글 코트',
         detail: `차콜 컬러의 싱글 코트입니다.
@@ -343,7 +348,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 7,
-        categoryId: 31,
+        categoryId: '31',
         categoryName: 'PANTS',
         name: '블랙 와이드 팬츠',
         detail: `블랙 컬러의 와이드 팬츠입니다.
@@ -358,7 +363,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 8,
-        categoryId: 23,
+        categoryId: '23',
         categoryName: 'HOODIE',
         name: '그레이 풀오버 후디',
         detail: `그레이 컬러의 풀오버 후디입니다.
@@ -373,7 +378,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 9,
-        categoryId: 22,
+        categoryId: '22',
         categoryName: 'SWEATER',
         name: '차콜 크루넥 니트',
         detail: `차콜 컬러의 크루넥 니트입니다.
@@ -388,7 +393,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 10,
-        categoryId: 32,
+        categoryId: '32',
         categoryName: 'DENIM',
         name: '그레이 스트레이트 데님 팬츠',
         detail: `그레이 컬러의 스트레이트 데님 팬츠입니다.
@@ -404,7 +409,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 11,
-        categoryId: 41,
+        categoryId: '41',
         categoryName: 'SHOES',
         name: '블랙 더비 슈즈',
         detail: `블랙 컬러의 레이스업 더비 슈즈입니다.
@@ -418,7 +423,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 12,
-        categoryId: 41,
+        categoryId: '41',
         categoryName: 'SHOES',
         name: '아이보리 뮬',
         detail: `아이보리 컬러의 뮬입니다.
@@ -433,7 +438,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 13,
-        categoryId: 41,
+        categoryId: '41',
         categoryName: 'SHOES',
         name: '블랙 스니커즈',
         detail: `블랙 컬러의 레이스업 스니커즈입니다.
@@ -449,7 +454,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 14,
-        categoryId: 42,
+        categoryId: '42',
         categoryName: 'BAGS',
         name: '차콜 크로스바디 백',
         detail: `차콜 컬러의 크로스바디 백입니다.
@@ -465,7 +470,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 15,
-        categoryId: 42,
+        categoryId: '42',
         categoryName: 'BAGS',
         name: '블랙 숄더백',
         detail: `블랙 컬러의 숄더백입니다.
@@ -482,7 +487,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 16,
-        categoryId: 42,
+        categoryId: '42',
         categoryName: 'BAGS',
         name: '베이지 토트백',
         detail: `베이지 컬러의 토트백입니다.
@@ -497,7 +502,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 17,
-        categoryId: 43,
+        categoryId: '43',
         categoryName: 'ACCESSORIES',
         name: '블랙 벨트',
         detail: `블랙 컬러의 버클 벨트입니다.
@@ -513,7 +518,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 18,
-        categoryId: 43,
+        categoryId: '43',
         categoryName: 'ACCESSORIES',
         name: '실버 체인 목걸이',
         detail: `실버 컬러의 체인 목걸이입니다.
@@ -533,7 +538,7 @@ Lining : Polyester 100%
     {
         ...COMMON_PRODUCT_INFO,
         id: 19,
-        categoryId: 43,
+        categoryId: '43',
         categoryName: 'ACCESSORIES',
         name: '블랙 선글라스',
         detail: `블랙 프레임과 어두운 렌즈의 선글라스입니다.
