@@ -4,7 +4,7 @@
  * 상품 목록 화면 전체를 구성하는 컴포넌트입니다.
  * 데이터 흐름: page.tsx → ProductList → ProductGrid → ProductCard.
  * page.tsx에서 받은 상품을 아래 그리드에 전달하고, 위에는 열 개수·카테고리 버튼을 배치합니다.
- * useState와 onClick을 사용하므로 파일 맨 위에 'use client' 선언이 필요합니다.
+ * useState·onClick·useSearchParams를 사용하므로 파일 맨 위에 'use client' 선언이 필요합니다.
  * 이 선언은 이 파일을 클라이언트 컴포넌트의 진입점으로 지정합니다.
  */
 // import type은 실행할 값이 아니라 TypeScript의 타입 검사에 사용할 정의를 가져옵니다.
@@ -12,6 +12,8 @@ import type { Product } from '@/domains/products/types/product.types';
 import ProductGrid from '@/domains/products/components/ProductGrid';
 import { MOCK_CATEGORIES } from '@/shared/mocks/mockData';
 import { useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 // Props는 부모 컴포넌트가 이 컴포넌트에 전달하는 값의 이름과 타입입니다.
 interface ProductListProps {
@@ -26,23 +28,38 @@ export default function ProductList({ products }: ProductListProps) {
     // 버튼의 값은 숫자가 아닌 문자열 '3'·'4'·'6'으로 비교하며, 처음에는 '6'을 선택합니다.
     // 선택값은 ProductGrid에 전달되어 PC 화면의 열 개수와 카드 정보 표시 여부에 쓰입니다.
     const [selectedGridId, setSelectedGridId] = useState('6');
-    // 'all'은 ALL 버튼을 뜻하는 화면용 값이며 실제 Category의 ID가 아닙니다.
-    // 이 상태로 버튼 색상을 바꾸고 아래 상품 목록을 거릅니다. 주소 변경은 아직 연결하지 않았습니다.
-    const [selectedCategoryId, setSelectedCategoryId] = useState('all');
+    // 선택한 카테고리는 상태가 아니라 주소의 ?category= 값으로 관리합니다.
+    // 그래서 헤더 드롭다운 링크로 들어와도, 새로고침하거나 링크를 공유해도 같은 목록이 보입니다.
+    // 값이 없거나 MOCK_CATEGORIES에 없는 ID면 selectedCategory는 undefined이고 ALL로 처리합니다.
+    const categoryParam = useSearchParams().get('category');
+    const selectedCategory = MOCK_CATEGORIES.find(
+        (category) => category.id === categoryParam,
+    );
+    // 버튼 강조에 쓰는 값입니다. 'all'은 ALL 버튼을 뜻하는 화면용 값이며 실제 Category의 ID가 아닙니다.
+    // 소분류를 고른 경우에도 그 부모 대분류 버튼이 함께 강조되도록 대분류 ID를 따로 구합니다.
+    const selectedCategoryId = selectedCategory?.id ?? 'all';
+    const selectedTopCategoryId = selectedCategory
+        ? (selectedCategory.parent_id ?? selectedCategory.id)
+        : 'all';
+    // 선택한 대분류에 속한 소분류 버튼 목록입니다. ALL이면 빈 배열이라 소분류 줄을 숨깁니다.
+    const subCategories = MOCK_CATEGORIES.filter(
+        (category) => category.parent_id === selectedTopCategoryId,
+    );
 
-    // ALL이면 전체 상품을, 대분류를 고르면 그 대분류에 속한 소분류의 상품만 남깁니다.
-    // 상품은 소분류 ID(categoryId)만 가지므로 MOCK_CATEGORIES에서 해당 소분류를 찾아
-    // parent_id가 선택한 대분류 ID와 같은지 비교합니다.
-    const visibleProducts =
-        selectedCategoryId === 'all'
-            ? products
-            : products.filter((product) =>
+    // ALL이면 전체 상품을 보여줍니다.
+    // 소분류를 고르면 categoryId가 같은 상품만, 대분류를 고르면 그 아래 소분류의 상품을 모두 남깁니다.
+    // 상품은 소분류 ID(categoryId)만 가지므로 대분류는 MOCK_CATEGORIES에서 소분류의 parent_id로 비교합니다.
+    const visibleProducts = selectedCategory
+        ? products.filter(
+              (product) =>
+                  product.categoryId === selectedCategory.id ||
                   MOCK_CATEGORIES.some(
                       (category) =>
                           category.id === product.categoryId &&
-                          category.parent_id === selectedCategoryId,
+                          category.parent_id === selectedCategory.id,
                   ),
-              );
+          )
+        : products;
 
     return (
         <section>
@@ -116,48 +133,78 @@ export default function ProductList({ products }: ProductListProps) {
                     id="category"
                     className="flex items-center gap-x-10 rounded-xl px-8 py-4 text-center shadow-md"
                 >
-                    {/* ALL은 데이터에서 가져오지 않고 직접 작성한 버튼이며 'all' 상태와 대응합니다. */}
+                    {/*
+                     * ALL은 데이터에서 가져오지 않고 직접 작성한 링크이며 'all' 값과 대응합니다.
+                     * 카테고리 버튼은 주소만 바꾸는 Link입니다. scroll={false}는 누를 때 페이지 맨 위로 이동하지 않게 합니다.
+                     */}
                     <li className="cursor-pointer">
-                        <button
-                            onClick={() => setSelectedCategoryId('all')}
-                            className={`cursor-pointer ${
-                                selectedCategoryId === 'all'
+                        <Link
+                            href="/products"
+                            scroll={false}
+                            className={
+                                selectedTopCategoryId === 'all'
                                     ? 'text-black'
                                     : 'text-gray-400'
-                            }`}
+                            }
                         >
                             ALL
-                        </button>
+                        </Link>
                     </li>
 
                     {/*
                      * filter는 parent_id가 null인 대분류만 골라 새 배열을 만듭니다.
                      * 이 filter는 버튼 목록만 대상으로 하며, 상품 필터링은 위의 visibleProducts가 담당합니다.
-                     * map은 골라낸 카테고리마다 li·button 요소를 하나씩 만듭니다.
+                     * map은 골라낸 카테고리마다 li·Link 요소를 하나씩 만듭니다.
                      * key에는 고유 ID를 넣어 React가 목록의 각 항목을 구별하게 합니다.
-                     * 클릭하면 category.id를 저장하고, category.name은 실제 버튼 글자로 표시합니다.
-                     * 클릭한 대분류 ID로 아래 상품 목록이 걸러집니다.
+                     * 누르면 주소가 /products?category=대분류ID로 바뀌고, category.name은 링크 글자로 표시합니다.
                      */}
                     {MOCK_CATEGORIES.filter(
                         (category) => category.parent_id === null,
                     ).map((category) => (
                         <li key={category.id} className="cursor-pointer">
-                            <button
-                                onClick={() =>
-                                    setSelectedCategoryId(category.id)
-                                }
-                                className={`cursor-pointer ${
-                                    selectedCategoryId === category.id
+                            <Link
+                                href={`/products?category=${category.id}`}
+                                scroll={false}
+                                className={
+                                    selectedTopCategoryId === category.id
                                         ? 'text-black'
                                         : 'text-gray-400'
-                                }`}
+                                }
                             >
                                 {category.name}
-                            </button>
+                            </Link>
                         </li>
                     ))}
                 </ul>
             </div>
+
+            {/*
+             * 소분류 링크 줄입니다. 대분류나 소분류를 고른 경우에만 그 대분류의 소분류를 보여줍니다.
+             * 누르면 주소가 /products?category=소분류ID로 바뀌어 그 소분류 상품만 남습니다.
+             * pb-8은 상품 그리드와의 간격, text-xs는 대분류보다 작은 글자 크기입니다.
+             */}
+            {subCategories.length > 0 && (
+                <ul
+                    aria-label="소분류"
+                    className="flex justify-center gap-x-8 pb-8 text-xs"
+                >
+                    {subCategories.map((category) => (
+                        <li key={category.id}>
+                            <Link
+                                href={`/products?category=${category.id}`}
+                                scroll={false}
+                                className={
+                                    selectedCategoryId === category.id
+                                        ? 'text-black'
+                                        : 'text-gray-400'
+                                }
+                            >
+                                {category.name}
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            )}
 
             {/*
              * 상품 목록 본문입니다. px-5로 상단 영역과 동일한 좌우 여백을 줍니다.
