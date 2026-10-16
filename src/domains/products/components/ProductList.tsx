@@ -36,15 +36,23 @@ export default function ProductList({ products }: ProductListProps) {
         (category) => category.id === categoryParam,
     );
     // 버튼 강조에 쓰는 값입니다. 'all'은 ALL 버튼을 뜻하는 화면용 값이며 실제 Category의 ID가 아닙니다.
-    // 소분류를 고른 경우에도 그 부모 대분류 버튼이 함께 강조되도록 대분류 ID를 따로 구합니다.
+    // 소분류를 고른 경우에는 부모 대분류 ID로 같은 그룹의 소분류 목록을 찾습니다.
     const selectedCategoryId = selectedCategory?.id ?? 'all';
     const selectedTopCategoryId = selectedCategory
         ? (selectedCategory.parent_id ?? selectedCategory.id)
         : 'all';
-    // 선택한 대분류에 속한 소분류 버튼 목록입니다. ALL이면 빈 배열이라 소분류 줄을 숨깁니다.
+    const selectedTopCategory = MOCK_CATEGORIES.find(
+        (category) => category.id === selectedTopCategoryId,
+    );
+    // 선택한 대분류에 속한 소분류를 기존 카테고리 바에 표시합니다.
     const subCategories = MOCK_CATEGORIES.filter(
         (category) => category.parent_id === selectedTopCategoryId,
     );
+
+    const displayedCategories =
+        subCategories.length > 0
+            ? subCategories
+            : MOCK_CATEGORIES.filter((category) => category.parent_id === null);
 
     // ALL이면 전체 상품을 보여줍니다.
     // 소분류를 고르면 categoryId가 같은 상품만, 대분류를 고르면 그 아래 소분류의 상품을 모두 남깁니다.
@@ -125,71 +133,40 @@ export default function ProductList({ products }: ProductListProps) {
                 </ul>
 
                 {/*
-                 * 가운데 대분류 버튼 영역입니다. parent_id가 null인 최상위 카테고리를 표시합니다.
+                 * 가운데 카테고리 바입니다. 대분류 선택 시 같은 자리의 목록을 소분류로 교체합니다.
                  * gap-x-10은 항목 사이 간격이며 text-center는 항목 내부 글자를 가로 정렬합니다.
                  * 구분선용 after 요소 없이 gap으로만 간격을 만듭니다.
                  */}
                 <ul
                     id="category"
+                    aria-label={subCategories.length > 0 ? '소분류' : '대분류'}
                     className="flex items-center gap-x-10 rounded-xl px-8 py-4 text-center shadow-md"
                 >
                     {/*
-                     * ALL은 데이터에서 가져오지 않고 직접 작성한 링크이며 'all' 값과 대응합니다.
+                     * 전체 상품에서는 ALL, 카테고리 안에서는 해당 중분류 이름과 전체 상품 링크를 표시합니다.
                      * 카테고리 버튼은 주소만 바꾸는 Link입니다. scroll={false}는 누를 때 페이지 맨 위로 이동하지 않게 합니다.
                      */}
                     <li className="cursor-pointer">
                         <Link
-                            href="/products"
+                            href={
+                                selectedTopCategory
+                                    ? `/products?category=${selectedTopCategory.id}`
+                                    : '/products'
+                            }
                             scroll={false}
                             className={
-                                selectedTopCategoryId === 'all'
+                                selectedCategoryId === selectedTopCategoryId
                                     ? 'text-black'
                                     : 'text-gray-400'
                             }
                         >
-                            ALL
+                            {selectedTopCategory?.name ?? 'ALL'}
                         </Link>
                     </li>
 
-                    {/*
-                     * filter는 parent_id가 null인 대분류만 골라 새 배열을 만듭니다.
-                     * 이 filter는 버튼 목록만 대상으로 하며, 상품 필터링은 위의 visibleProducts가 담당합니다.
-                     * map은 골라낸 카테고리마다 li·Link 요소를 하나씩 만듭니다.
-                     * key에는 고유 ID를 넣어 React가 목록의 각 항목을 구별하게 합니다.
-                     * 누르면 주소가 /products?category=대분류ID로 바뀌고, category.name은 링크 글자로 표시합니다.
-                     */}
-                    {MOCK_CATEGORIES.filter(
-                        (category) => category.parent_id === null,
-                    ).map((category) => (
+                    {/* 선택한 그룹의 소분류 또는 전체 대분류를 같은 바에 표시합니다. */}
+                    {displayedCategories.map((category) => (
                         <li key={category.id} className="cursor-pointer">
-                            <Link
-                                href={`/products?category=${category.id}`}
-                                scroll={false}
-                                className={
-                                    selectedTopCategoryId === category.id
-                                        ? 'text-black'
-                                        : 'text-gray-400'
-                                }
-                            >
-                                {category.name}
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-
-            {/*
-             * 소분류 링크 줄입니다. 대분류나 소분류를 고른 경우에만 그 대분류의 소분류를 보여줍니다.
-             * 누르면 주소가 /products?category=소분류ID로 바뀌어 그 소분류 상품만 남습니다.
-             * pb-8은 상품 그리드와의 간격, text-xs는 대분류보다 작은 글자 크기입니다.
-             */}
-            {subCategories.length > 0 && (
-                <ul
-                    aria-label="소분류"
-                    className="flex justify-center gap-x-8 pb-8 text-xs"
-                >
-                    {subCategories.map((category) => (
-                        <li key={category.id}>
                             <Link
                                 href={`/products?category=${category.id}`}
                                 scroll={false}
@@ -204,7 +181,7 @@ export default function ProductList({ products }: ProductListProps) {
                         </li>
                     ))}
                 </ul>
-            )}
+            </div>
 
             {/*
              * 상품 목록 본문입니다. px-5로 상단 영역과 동일한 좌우 여백을 줍니다.
