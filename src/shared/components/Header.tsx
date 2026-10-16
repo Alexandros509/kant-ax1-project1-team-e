@@ -43,8 +43,11 @@ export default function Header() {
     const isTransparent = isHome && isOverHero;
 
     return (
+        /*
+         * has-[nav.group:hover]:bg-black: 카테고리 드롭다운이 열리는 동안에는 투명 상태여도 헤더를 검정으로 바꿔 드롭다운과 이어지게 함
+         */
         <header
-            className={`fixed inset-x-0 bottom-0 z-50 w-full text-white transition-colors duration-300 ${isTransparent ? 'bg-transparent' : 'bg-black'}`}
+            className={`fixed inset-x-0 bottom-0 z-50 w-full text-white transition-colors duration-300 has-[nav.group:hover]:bg-black ${isTransparent ? 'bg-transparent' : 'bg-black'}`}
         >
             <div className="grid h-15 grid-cols-[1fr_auto_1fr] items-center px-5">
                 {/*
