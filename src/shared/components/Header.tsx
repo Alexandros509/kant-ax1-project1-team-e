@@ -1,16 +1,54 @@
 'use client';
+import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
 import useCounterStore from '@/shared/store/useCounterStore';
+
+const HEADER_HEIGHT = 60;
+
+// 스크롤과 창 크기가 바뀌면 헤더가 영상 위에 있는지 다시 계산하도록 구독함
+function subscribeViewport(onChange: () => void) {
+    window.addEventListener('scroll', onChange, { passive: true });
+    window.addEventListener('resize', onChange);
+    return () => {
+        window.removeEventListener('scroll', onChange);
+        window.removeEventListener('resize', onChange);
+    };
+}
+
+// 인덱스 히어로는 화면 너비 기준 16:9 영상이므로, 헤더 위치가 영상 높이보다 위에 있으면 영상 위에 겹쳐 있는 상태임
+function getIsOverHero() {
+    const headerTop = window.scrollY + window.innerHeight - HEADER_HEIGHT;
+    return headerTop < (window.innerWidth * 9) / 16;
+}
+
+// 서버 렌더링에서는 기본 검정 헤더를 그림
+function getServerIsOverHero() {
+    return false;
+}
 
 export default function Header() {
     const totalQuantity = useCounterStore((state) =>
         state.cartItems.reduce((total, item) => total + item.quantity, 0),
     );
+    const isHome = usePathname() === '/';
+    const isOverHero = useSyncExternalStore(
+        subscribeViewport,
+        getIsOverHero,
+        getServerIsOverHero,
+    );
+    // 인덱스에서 헤더가 영상 위에 있을 때만 배경을 투명하게 해서 영상 전체가 보이게 함
+    const isTransparent = isHome && isOverHero;
 
     return (
-        <header className="fixed inset-x-0 bottom-0 z-50 w-full bg-black text-white">
+        /*
+         * has-[nav.group:hover]:bg-black: 카테고리 드롭다운이 열리는 동안에는 투명 상태여도 헤더를 검정으로 바꿔 드롭다운과 이어지게 함
+         */
+        <header
+            className={`fixed inset-x-0 bottom-0 z-50 w-full text-white transition-colors duration-300 has-[nav.group:hover]:bg-black ${isTransparent ? 'bg-transparent' : 'bg-black'}`}
+        >
             <div className="grid h-15 grid-cols-[1fr_auto_1fr] items-center px-5">
                 {/*
                  * group: 버튼과 드롭다운 메뉴를 하나의 hover 영역으로 묶음
