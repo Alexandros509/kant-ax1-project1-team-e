@@ -31,7 +31,7 @@ export default function CartSummary({ items }: CartSummaryProps) {
             </dl>
 
             <p className="mt-4 text-sm text-gray-500">
-                결제 시 세금,할인 및 배송료가 계산됩니다.
+                TAXES, DISCOUNTS & SHIPPING CALCULATED AT CHECKOUT.
             </p>
 
             <button
