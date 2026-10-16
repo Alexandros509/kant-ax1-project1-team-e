@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
+
+import CartDrawer from '@/domains/cart/components/CartDrawer';
 import useCounterStore from '@/shared/store/useCounterStore';
 
 const HEADER_HEIGHT = 60;
@@ -251,16 +253,7 @@ export default function Header() {
                     {/* LOGIN 문구를 표시하며 href="/login"으로 로그인 페이지에 연결됨 */}
                     <Link href="/login">LOGIN</Link>
 
-                    {/*
-                     * href="/cart": 장바구니 페이지로 이동함
-                     * flex items-center: CART 문구와 수량을 가로로 배치하고 세로 중앙에 정렬함
-                     * gap-3: 문구와 수량 사이에 12px 간격을 적용함
-                     */}
-                    <Link href="/cart" className="flex items-center gap-3">
-                        {/* span으로 장바구니 문구를 감싸며 수량과 별도 항목으로 배치함 */}
-                        <span>CART</span>
-                        <span>{totalQuantity}</span>
-                    </Link>
+                    <CartDrawer totalQuantity={totalQuantity} />
                 </nav>
             </div>
         </header>

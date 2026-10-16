@@ -19,7 +19,7 @@ export default function CartItemList({
 }: CartItemListProps) {
     // 장바구니에 담긴 상품이 없을 경우 메시지 표시하며, 장바구니의 상태를 이해할 수 있도록 안내한다.
     if (items.length === 0) {
-        return <p>장바구니에 담긴 상품이 없습니다.</p>;
+        return <p>YOUR CART IS EMPTY.</p>;
     }
 
     return (
@@ -78,11 +78,11 @@ export default function CartItemList({
 
                             <button
                                 type="button"
-                                aria-label={`${item.productNameAtAdded} 삭제`}
-                                className="rounded border px-3 py-1"
+                                aria-label={`${item.productNameAtAdded} REMOVE`}
+                                className="rounded border px-3 py-1 text-sm"
                                 onClick={() => onRemoveItem(item.id)}
                             >
-                                삭제
+                                REMOVE
                             </button>
                         </div>
                     </div>
