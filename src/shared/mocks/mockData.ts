@@ -20,6 +20,7 @@ import type { Product } from '@/domains/products/types/product.types';
  * 예: COAT의 parent_id: '1'은 OUTER에 속한다는 뜻입니다.
  * depth는 이 목 데이터에서 대분류 0, 소분류 1로 사용합니다.
  * sort_order는 같은 부모 안에서의 표시 순서이며 1부터 부여합니다.
+ * 소분류 구성과 순서는 헤더 드롭다운 메뉴와 맞춥니다. PADDING·SHORTS는 아직 상품이 없습니다.
  * 실제 API의 depth·정렬 규칙이 확정되면 목 값도 그 규칙에 맞춰야 합니다.
  * children은 공용 타입의 선택 필드로, 여기서는 parent_id로 연결한 평면 목록을 제공합니다.
  * satisfies Category[]는 각 항목이 공용 카테고리 구조에 맞는지 컴파일 시 검사합니다.
@@ -33,16 +34,18 @@ export const MOCK_CATEGORIES = [
 
     // OUTER 소분류
     { id: '11', name: 'JACKET', parent_id: '1', depth: 1, sort_order: 1 },
-    { id: '12', name: 'COAT', parent_id: '1', depth: 1, sort_order: 2 },
+    { id: '13', name: 'PADDING', parent_id: '1', depth: 1, sort_order: 2 },
+    { id: '12', name: 'COAT', parent_id: '1', depth: 1, sort_order: 3 },
 
     // TOP 소분류
     { id: '21', name: 'T-SHIRT', parent_id: '2', depth: 1, sort_order: 1 },
-    { id: '22', name: 'SWEATER', parent_id: '2', depth: 1, sort_order: 2 },
-    { id: '23', name: 'HOODIE', parent_id: '2', depth: 1, sort_order: 3 },
+    { id: '23', name: 'HOODIE', parent_id: '2', depth: 1, sort_order: 2 },
+    { id: '22', name: 'KNIT', parent_id: '2', depth: 1, sort_order: 3 },
 
     // BOTTOM 소분류
     { id: '31', name: 'PANTS', parent_id: '3', depth: 1, sort_order: 1 },
     { id: '32', name: 'DENIM', parent_id: '3', depth: 1, sort_order: 2 },
+    { id: '33', name: 'SHORTS', parent_id: '3', depth: 1, sort_order: 3 },
 
     // E.T.C 소분류
     { id: '41', name: 'SHOES', parent_id: '4', depth: 1, sort_order: 1 },
@@ -263,7 +266,7 @@ Lining : Polyester 100%
         ...COMMON_PRODUCT_INFO,
         id: 2,
         categoryId: '22',
-        categoryName: 'SWEATER',
+        categoryName: 'KNIT',
         name: '아이보리 크루넥 니트',
         detail: `Body : Cotton 60%, Acrylic 40%
 
@@ -379,7 +382,7 @@ Lining : Polyester 100%
         ...COMMON_PRODUCT_INFO,
         id: 9,
         categoryId: '22',
-        categoryName: 'SWEATER',
+        categoryName: 'KNIT',
         name: '차콜 크루넥 니트',
         detail: `차콜 컬러의 크루넥 니트입니다.
 목둘레, 소매와 밑단의 리브 마감이 특징입니다.
