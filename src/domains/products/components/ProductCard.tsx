@@ -68,7 +68,6 @@ export default function ProductCard({ product, showInfo }: ProductCardProps) {
                             src={imageUrl}
                             alt={product.name}
                             fill
-                            unoptimized
                             sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, (max-width: 1439px) 25vw, 320px"
                             className="object-contain transition-transform duration-300 motion-safe:group-hover:scale-105"
                         />
@@ -97,7 +96,7 @@ export default function ProductCard({ product, showInfo }: ProductCardProps) {
                 )}
                 {/* 신상품일 때만 NEW 배지를 이미지 왼쪽 위에 겹쳐 표시합니다. */}
                 {product.new && (
-                    <span className="absolute top-3 left-3 bg-white px-2 py-1 text-[10px] font-semibold tracking-wider opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <span className="absolute top-3 left-3 bg-white px-2 py-1 text-[10px] font-semibold tracking-wider opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100">
                         NEW
                     </span>
                 )}
