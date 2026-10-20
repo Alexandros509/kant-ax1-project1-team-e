@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
 
+import useAuthUser from '@/domains/auth/hooks/useAuthUser';
 import CartDrawer from '@/domains/cart/components/CartDrawer';
 import useCounterStore from '@/shared/store/useCounterStore';
 
@@ -35,6 +36,7 @@ export default function Header() {
     const totalQuantity = useCounterStore((state) =>
         state.cartItems.reduce((total, item) => total + item.quantity, 0),
     );
+    const { user, signOut } = useAuthUser();
     const isHome = usePathname() === '/';
     const isOverHero = useSyncExternalStore(
         subscribeViewport,
@@ -247,11 +249,25 @@ export default function Header() {
                         <Search size={12} strokeWidth={1.5} />
                     </button>
 
-                    {/* JOIN 문구를 표시하며 현재 href="/login"으로 로그인 페이지에 연결됨 */}
-                    <Link href="/login">JOIN</Link>
+                    {/* 로그인 상태면 LOGOUT 버튼을, 아니면 JOIN/LOGIN 링크를 표시함 */}
+                    {user ? (
+                        <button
+                            type="button"
+                            onClick={signOut}
+                            title={user.email}
+                            className="cursor-pointer"
+                        >
+                            LOGOUT
+                        </button>
+                    ) : (
+                        <>
+                            {/* JOIN 문구를 표시하며 href="/signup"으로 회원가입 페이지에 연결됨 */}
+                            <Link href="/signup">JOIN</Link>
 
-                    {/* LOGIN 문구를 표시하며 href="/login"으로 로그인 페이지에 연결됨 */}
-                    <Link href="/login">LOGIN</Link>
+                            {/* LOGIN 문구를 표시하며 href="/login"으로 로그인 페이지에 연결됨 */}
+                            <Link href="/login">LOGIN</Link>
+                        </>
+                    )}
 
                     <CartDrawer totalQuantity={totalQuantity} />
                 </nav>
