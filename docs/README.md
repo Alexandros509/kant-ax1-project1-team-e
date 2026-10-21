@@ -2,6 +2,14 @@
 
 일자별로 정리한 프로젝트 명세와 변경 분석 문서다. 기존 Cart 화면 이미지는 이 폴더에 함께 보관한다. 각 문서에 적힌 계획·제안·검증 상태는 작성일 기준으로 읽는다.
 
+## Cart 화면
+
+| 화면 | 이미지 |
+| --- | --- |
+| 데스크톱 Cart | [cart-desktop.png](./cart-desktop.png) |
+| 모바일 Cart | [cart-mobile.png](./cart-mobile.png) |
+| 빈 Cart | [cart-empty.png](./cart-empty.png) |
+
 ## 2026-10-14
 
 | 문서 | 내용 |
