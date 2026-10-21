@@ -162,7 +162,7 @@ export default function ProductDetail({ id }: ProductDetailProps) {
      * 최상위 태그는 하나여야 함 → 여기서는 <main>이 전체를 감쌈
      */
     return (
-        <main className="">
+        <main className="px-5">
             {/*  상단 영역  */}
             <div className="wrapper flex flex-col gap-5 md:flex-row">
                 <div className="image flex w-full flex-col gap-5 md:w-1/2">
@@ -338,12 +338,12 @@ export default function ProductDetail({ id }: ProductDetailProps) {
             </div>
 
             {/*  하단 영역  */}
-            <div className="mt-10 flex flex-col gap-5 md:flex-row">
+            <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
                 {/* 상단 왼쪽 이미지와 같은 map 방식. modelImages(모델 착용 사진 3장)를 한 줄에 나열 */}
                 {modelImages.map((image) => (
                     <img
                         key={image.id}
-                        className="w-full md:w-1/3"
+                        className="aspect-[3/4] w-full object-cover"
                         src={image.url}
                         alt={`${product.name} 모델 착용 이미지 ${image.seq}`}
                     />
