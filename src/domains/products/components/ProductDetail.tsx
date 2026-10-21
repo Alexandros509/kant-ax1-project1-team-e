@@ -12,6 +12,8 @@ import { MOCK_PRODUCTS } from '@/shared/mocks/mockData';
 import { formatPrice } from '@/shared/utils/formatPrice';
 // 상태를 만드는 함수 가져오기
 import { useState } from 'react';
+// 클릭하면 칸 안에서 확대되고, 확대 상태에서 드래그로 이동하는 이미지 칸
+import ZoomableImage from '@/domains/products/components/ZoomableImage';
 
 /*
  * 리액트 컴포넌트: 화면 조각(JSX)을 return 하는 함수
@@ -173,11 +175,12 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                     alt={`...${ }...`}	백틱 문자열로 상품명과 순서를 끼워 넣은 설명 글
                     */}
                     {leftImages.map((image) => (
-                        <img
+                        <ZoomableImage
                             key={image.id}
-                            className="w-full"
-                            src={image.url}
+                            src={image.url ?? ''}
                             alt={`${product.name} 상세 이미지 ${image.seq}`}
+                            fill
+                            className="aspect-[3/4]"
                         />
                     ))}
                 </div>
