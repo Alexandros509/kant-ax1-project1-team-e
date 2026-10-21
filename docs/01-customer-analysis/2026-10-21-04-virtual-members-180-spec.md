@@ -3,7 +3,7 @@
 - 버전: v1.0 / 프로필 데이터 revision 3
 - 작성일: 2026-10-21, Asia/Seoul
 - 대상 기간: 2026-10-20~2026-10-21의 인터뷰·합의·생성 결과
-- 관련 문서: [측정 지표](./03-abc-ga4-metrics-spec.md), [GA4 설정 프로세스](./05-abc-ga4-setup-process-spec.md)
+- 관련 문서: [측정 지표](../03-metrics-validation/2026-10-21-03-abc-ga4-metrics-spec.md), [GA4 설정 프로세스](../03-metrics-validation/2026-10-21-05-abc-ga4-setup-process-spec.md)
 
 ## 1. 목적과 데이터의 성격
 

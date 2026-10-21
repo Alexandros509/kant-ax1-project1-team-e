@@ -4,7 +4,7 @@
 - 작성일: 2026-10-21, Asia/Seoul
 - 대상 기간: 2026-10-20~2026-10-21
 - 목적: 실제 설정·수신 검증과 앞으로 수행할 연결 작업을 분리해 재현 가능하게 기록
-- 관련 문서: [지표 정의](./03-abc-ga4-metrics-spec.md), [180명 회원 정의](./04-virtual-members-180-spec.md)
+- 관련 문서: [지표 정의](./2026-10-21-03-abc-ga4-metrics-spec.md), [180명 회원 정의](../01-customer-analysis/2026-10-21-04-virtual-members-180-spec.md)
 
 ## 1. 현재 결론
 
@@ -211,4 +211,4 @@ B/C 검증 주소는 https://onepiece-b-test.vercel.app / https://onepiece-c-tes
 기기 카테고리·페이지 경로 차원으로 접속 기기와 화면 이동을 구분한다. 페이지 경로 또는 쿼리가 바뀌는 SPA 화면도 실제 page_view와 현재 주소가 올바르게 수집되는지 확인해야 한다.
 
 
-10/21 배포본의 실제 오류·앱 GA 수신 결과는 [B/C Vercel 검증](./06-bc-vercel-validation.md)을 따른다. B 비활성 로그인·C 배포 환경변수 누락·C 실제 담기 미반영·Toss click_only를 확인했으며 회원 구매 파일럿은 통과하지 않았다.
+10/21 배포본의 실제 오류·앱 GA 수신 결과는 [B/C Vercel 검증](./2026-10-21-06-bc-vercel-validation.md)을 따른다. B 비활성 로그인·C 배포 환경변수 누락·C 실제 담기 미반영·Toss click_only를 확인했으며 회원 구매 파일럿은 통과하지 않았다.

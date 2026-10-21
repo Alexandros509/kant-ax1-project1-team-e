@@ -2,8 +2,8 @@
 
 - 작성일: 2026-10-21
 - 상태: 6명 브라우저 로그인·로컬 A 계측 스모크 실행 완료. GA4 Checkout 시연 6건 수신 관찰, 3개 실행 ID 상세 표본 대조. 선행 환경 Auth 180명 준비와 팀 환경 Auth 6명 검증은 구분하며, 180명 본 행동 실험은 미시작.
-- 관련 가설: [B·C PC 웹→모바일 웹 구매 여정](./02-bc-web-mobile-hypothesis-spec.md)
-- 대상 프로필: [가상 회원 180명 정의](./04-virtual-members-180-spec.md)
+- 관련 가설: [B·C PC 웹→모바일 웹 구매 여정](../02-service-planning/2026-10-21-02-bc-web-mobile-hypothesis-spec.md)
+- 대상 프로필: [가상 회원 180명 정의](../01-customer-analysis/2026-10-21-04-virtual-members-180-spec.md)
 - 현재 데이터: revision3, 180명·27개 컬럼. 기존21컬럼 값을 보존하고 가설·B/C 비교·모바일 이어가기·Cart 공유·Checkout 목표 조건6개를 추가했다. 이 값은 실행 계획이며 성공 결과가 아니다.
 
 ## 1. ‘주입’의 의미

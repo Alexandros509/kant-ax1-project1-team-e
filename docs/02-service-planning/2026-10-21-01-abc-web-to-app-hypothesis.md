@@ -1,9 +1,9 @@
 # ONEPIECE A·B·C 분석과 웹 탐색 → 동일 서비스 앱 구매 가설
 
 - 작성일: 2026-10-21, Asia/Seoul
-- 상태: 2026-10-21의 동일 서비스 앱 구매 가설 설계본. 실험 결과 또는 앱 구현 완료 보고가 아니다. 같은 날 후속 설계에서 정한 PC→모바일 웹 검증 범위는 [B·C 모바일 웹 가설](./02-bc-web-mobile-hypothesis-spec.md)을 따른다.
+- 상태: 2026-10-21의 동일 서비스 앱 구매 가설 설계본. 실험 결과 또는 앱 구현 완료 보고가 아니다. 같은 날 후속 설계에서 정한 PC→모바일 웹 검증 범위는 [B·C 모바일 웹 가설](./2026-10-21-02-bc-web-mobile-hypothesis-spec.md)을 따른다.
 - 전환 목적지: 웹에서 탐색한 **동일 서비스의 앱 버전 장바구니**다. 다른 쇼핑 플랫폼으로 이동하는 가설이 아니다.
-- 기존 맥락: [User FGI 정리](../2026-10-20/01-user-fgi-spec.md), [스프린트 범위](../2026-10-20/02-sprint-task-and-validation-spec.md).
+- 기존 맥락: [User FGI 정리](../01-customer-analysis/2026-10-20-01-user-fgi-spec.md), [스프린트 범위](../04-task-specs/2026-10-20-02-sprint-task-and-validation-spec.md).
 
 ## 1. 분석 대상과 목적
 

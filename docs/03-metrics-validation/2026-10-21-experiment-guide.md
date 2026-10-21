@@ -6,13 +6,13 @@
 
 | 문서 | 확인할 내용 |
 | --- | --- |
-| [A·B·C 웹→앱 가설](./01-abc-web-to-app-hypothesis.md) | A 레퍼런스 해체 분석, B·C 비교 목적, 동일 서비스 앱 Cart 이어가기의 초기 가설 |
-| [가상 회원 생성·행동 실행·측정 절차](./01-member-injection-and-measurement-spec.md) | 프로필·인증 계정·브라우저 실행·GA 수신의 구분과 소수 검증 절차 |
-| [B·C PC 웹→모바일 웹 가설](./02-bc-web-mobile-hypothesis-spec.md) | 실제 비교 범위, 회원·Cart 연결, 조건과 미확정 기준 |
-| [A·B·C GA4 측정 지표](./03-abc-ga4-metrics-spec.md) | 유효 실행 분모, 퍼널·UI 지표, 계측 한계 |
-| [가상 회원 180명 정의](./04-virtual-members-180-spec.md) | 6개 행동 유형, 과업·예산 배정, 27개 컬럼의 의미 |
-| [GA4 설정·검증 프로세스](./05-abc-ga4-setup-process-spec.md) | 태그·호스트·안 구분과 작성 당시 실제 검증 결과 |
-| [B·C Vercel 화면·흐름 검증](./06-bc-vercel-validation.md) | 배포 화면의 로그인·Cart·Checkout 오류와 후속 확인 기준 |
+| [A·B·C 웹→앱 가설](../02-service-planning/2026-10-21-01-abc-web-to-app-hypothesis.md) | A 레퍼런스 해체 분석, B·C 비교 목적, 동일 서비스 앱 Cart 이어가기의 초기 가설 |
+| [가상 회원 생성·행동 실행·측정 절차](./2026-10-21-01-member-injection-and-measurement-spec.md) | 프로필·인증 계정·브라우저 실행·GA 수신의 구분과 소수 검증 절차 |
+| [B·C PC 웹→모바일 웹 가설](../02-service-planning/2026-10-21-02-bc-web-mobile-hypothesis-spec.md) | 실제 비교 범위, 회원·Cart 연결, 조건과 미확정 기준 |
+| [A·B·C GA4 측정 지표](./2026-10-21-03-abc-ga4-metrics-spec.md) | 유효 실행 분모, 퍼널·UI 지표, 계측 한계 |
+| [가상 회원 180명 정의](../01-customer-analysis/2026-10-21-04-virtual-members-180-spec.md) | 6개 행동 유형, 과업·예산 배정, 27개 컬럼의 의미 |
+| [GA4 설정·검증 프로세스](./2026-10-21-05-abc-ga4-setup-process-spec.md) | 태그·호스트·안 구분과 작성 당시 실제 검증 결과 |
+| [B·C Vercel 화면·흐름 검증](./2026-10-21-06-bc-vercel-validation.md) | 배포 화면의 로그인·Cart·Checkout 오류와 후속 확인 기준 |
 
 ## 읽는 기준
 

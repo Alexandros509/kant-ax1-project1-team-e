@@ -1,9 +1,9 @@
 # B·C안 PC 웹→모바일 웹 구매 여정 검증 가설
 
 - 작성일: 2026-10-21
-- 상태: 2026-10-21 후속 설계에서 PC→모바일 웹으로 범위를 구체화한 가설. 비교할 구체 UI, 탐색 기준, 판정 수치는 후속 결정 사항이다. 원래 동일 서비스 앱 구매 가설은 [A·B·C 웹→앱 가설](./01-abc-web-to-app-hypothesis.md)에 정리했다.
+- 상태: 2026-10-21 후속 설계에서 PC→모바일 웹으로 범위를 구체화한 가설. 비교할 구체 UI, 탐색 기준, 판정 수치는 후속 결정 사항이다. 원래 동일 서비스 앱 구매 가설은 [A·B·C 웹→앱 가설](./2026-10-21-01-abc-web-to-app-hypothesis.md)에 정리했다.
 - A: SAN SAN GEAR 레퍼런스 클론 / B: ONEPIECE 바이브코딩 버전 / C: ONEPIECE 팀 손코딩 버전. 이번 가설의 직접 비교 대상은 B·C다.
-- [FGI 원본 정리](../2026-10-20/01-user-fgi-spec.md), [가상 회원 실행 절차](./01-member-injection-and-measurement-spec.md)
+- [FGI 원본 정리](../01-customer-analysis/2026-10-20-01-user-fgi-spec.md), [가상 회원 실행 절차](../03-metrics-validation/2026-10-21-01-member-injection-and-measurement-spec.md)
 - 회원 프로필 스키마 revision3에 hypothesis_id, comparison_scope, continuation_channel, continuation_entry_path, target_action, cart_sync_requirement를 추가했다. 기존 device=desktop·entry_path=/·initial_cart_state=empty는 PC 탐색 시작 조건이며 모바일 이어가기 단계의 Cart를 비우라는 뜻이 아니다.
 
 ## 1. 출발 가설과 현재 검증 범위

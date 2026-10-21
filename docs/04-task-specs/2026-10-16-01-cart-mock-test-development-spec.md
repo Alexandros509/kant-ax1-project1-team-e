@@ -1,6 +1,6 @@
 # ONEPIECE Cart Mock 테스트·화면 보완 작업 명세
 
-> 2026-10-16 회의 이후의 현재 작업 범위는 [Cart Drawer·Mock 데이터·GA4 테스트 환경 명세](./02-cart-drawer-mock-analytics-spec.md)를 우선합니다. 이 문서는 회의 전 계획과 수용 기준을 보존한 기록입니다. Drawer·실제 담기·로컬 분석 이벤트의 범위와 현재 Git 상태는 새 명세를 따릅니다.
+> 2026-10-16 회의 이후의 현재 작업 범위는 [Cart Drawer·Mock 데이터·GA4 테스트 환경 명세](./2026-10-16-02-cart-drawer-mock-analytics-spec.md)를 우선합니다. 이 문서는 회의 전 계획과 수용 기준을 보존한 기록입니다. Drawer·실제 담기·로컬 분석 이벤트의 범위와 현재 Git 상태는 새 명세를 따릅니다.
 
 - 작성일: 2026-10-16 / Asia/Seoul
 - 학습 분류: LV.2 / Week 9
