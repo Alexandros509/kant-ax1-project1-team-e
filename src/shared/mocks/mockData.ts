@@ -1,57 +1,15 @@
 /**
- * 상품 목록·상세 화면 개발에 사용하는 카테고리와 상품 목(mock) 데이터입니다.
+ * 상품 상세 화면 개발과 카탈로그 초기 입력에 사용하는 상품 목(mock) 데이터입니다.
  * MOCK은 실제 API 응답을 대신하는 샘플이라는 뜻입니다.
  * 상수 이름은 대문자와 밑줄로, 함수·상품 필드는 camelCase로 작성했습니다.
- * Category와 FileInfo의 snake_case 필드는 기존 공용 타입과 동일하게 유지합니다.
+ * FileInfo의 snake_case 필드는 기존 공용 타입과 동일하게 유지합니다.
  * 가격·소재·제조 정보·배송 정책은 화면 확인용이며 실제 판매 정보로 확정된 값이 아닙니다.
  */
 // import type: 데이터 형태를 검사하는 타입만 가져오며 실행 시의 값은 가져오지 않습니다.
-// Category는 카테고리, FileInfo는 파일, Product는 상품 객체의 필드와 타입을 정의합니다.
-import type { Category } from '@/domains/categories/types/category.types';
+// FileInfo는 파일, Product는 상품 객체의 필드와 타입을 정의합니다.
 import type { FileInfo } from '@/domains/files/types/file.types';
 
 import type { Product } from '@/domains/products/types/product.types';
-
-/**
- * MOCK_CATEGORIES: 여러 카테고리(CATEGORIES)를 담은 샘플 상수입니다.
- * 공용 Category 타입을 기준으로 id와 parent_id를 모두 문자열로 통일합니다.
- * 상품의 categoryId도 문자열로 저장하므로 ===로 직접 비교할 수 있습니다.
- * parent_id가 null이면 대분류, 값이 있으면 해당 id의 상위 카테고리에 속합니다.
- * 예: COAT의 parent_id: '1'은 OUTER에 속한다는 뜻입니다.
- * depth는 이 목 데이터에서 대분류 0, 소분류 1로 사용합니다.
- * sort_order는 같은 부모 안에서의 표시 순서이며 1부터 부여합니다.
- * 소분류 구성과 순서는 헤더 드롭다운 메뉴와 맞춥니다. PADDING·SHORTS는 아직 상품이 없습니다.
- * 실제 API의 depth·정렬 규칙이 확정되면 목 값도 그 규칙에 맞춰야 합니다.
- * children은 공용 타입의 선택 필드로, 여기서는 parent_id로 연결한 평면 목록을 제공합니다.
- * satisfies Category[]는 각 항목이 공용 카테고리 구조에 맞는지 컴파일 시 검사합니다.
- */
-export const MOCK_CATEGORIES = [
-    // 대분류
-    { id: '1', name: 'OUTER', parent_id: null, depth: 0, sort_order: 1 },
-    { id: '2', name: 'TOP', parent_id: null, depth: 0, sort_order: 2 },
-    { id: '3', name: 'BOTTOM', parent_id: null, depth: 0, sort_order: 3 },
-    { id: '4', name: 'E.T.C', parent_id: null, depth: 0, sort_order: 4 },
-
-    // OUTER 소분류
-    { id: '11', name: 'JACKET', parent_id: '1', depth: 1, sort_order: 1 },
-    { id: '13', name: 'PADDING', parent_id: '1', depth: 1, sort_order: 2 },
-    { id: '12', name: 'COAT', parent_id: '1', depth: 1, sort_order: 3 },
-
-    // TOP 소분류
-    { id: '21', name: 'T-SHIRT', parent_id: '2', depth: 1, sort_order: 1 },
-    { id: '23', name: 'HOODIE', parent_id: '2', depth: 1, sort_order: 2 },
-    { id: '22', name: 'KNIT', parent_id: '2', depth: 1, sort_order: 3 },
-
-    // BOTTOM 소분류
-    { id: '31', name: 'PANTS', parent_id: '3', depth: 1, sort_order: 1 },
-    { id: '32', name: 'DENIM', parent_id: '3', depth: 1, sort_order: 2 },
-    { id: '33', name: 'SHORTS', parent_id: '3', depth: 1, sort_order: 3 },
-
-    // E.T.C 소분류
-    { id: '41', name: 'SHOES', parent_id: '4', depth: 1, sort_order: 1 },
-    { id: '42', name: 'BAGS', parent_id: '4', depth: 1, sort_order: 2 },
-    { id: '43', name: 'ACCESSORIES', parent_id: '4', depth: 1, sort_order: 3 },
-] satisfies Category[];
 
 /**
  * createMockProductImage: 상품 이미지의 공용 파일 정보 객체를 만드는 함수입니다.
@@ -163,7 +121,7 @@ export const MOCK_PRODUCTS: Product[] = [
         ...COMMON_PRODUCT_INFO,
         // 상품 고유 번호입니다. images 안에 전달하는 이미지 파일 id와는 다른 식별자입니다.
         id: 1,
-        // 카테고리 연결용 번호입니다. MOCK_CATEGORIES의 COAT(id: '12')를 참조합니다.
+        // 카테고리 연결용 번호입니다. 카탈로그 초기 데이터의 COAT(id: '12')를 참조합니다.
         categoryId: '12',
         // 카드에 표시할 분류명으로 연결한 카테고리의 name과 일치시킵니다.
         categoryName: 'COAT',

@@ -5,11 +5,11 @@
  * ProductList의 클라이언트 컴포넌트 경계 안에서 사용됩니다.
  */
 import ProductCard from '@/domains/products/components/ProductCard';
-import type { Product } from '@/domains/products/types/product.types';
+import type { ProductListItem } from '@/domains/products/types/product.types';
 
 interface ProductGridProps {
     /** 화면에 나열할 상품들입니다. 비어 있으면 안내 문구를 표시합니다. */
-    products: Product[];
+    products: ProductListItem[];
     /** ProductList에서 선택한 열 개수입니다. 현재 버튼은 '3'·'4'·'6'을 전달합니다. */
     grid: string;
 }
@@ -47,13 +47,11 @@ export default function ProductGrid({ products, grid }: ProductGridProps) {
             {/*
              * 상품마다 목록 항목 하나와 카드 하나를 만듭니다. key는 상품의 고유 ID입니다.
              * product에는 상품 객체 전체를 전달합니다.
-             * grid === '3'은 비교 결과인 true 또는 false를 showInfo로 전달합니다.
-             * 따라서 showInfo는 현재 실제 열 개수가 아니라 선택한 버튼 값을 기준으로 합니다.
-             * ProductCard는 true이면 정보를 항상, false이면 카드 호버 시 보여줍니다.
+             * 열 개수는 배치만 결정하며 ProductCard는 상품 정보를 항상 표시합니다.
              */}
             {products.map((product) => (
                 <li key={product.id}>
-                    <ProductCard product={product} showInfo={grid === '3'} />
+                    <ProductCard product={product} />
                 </li>
             ))}
         </ul>

@@ -39,3 +39,19 @@ export interface Product {
     /** 신상품 여부. true이면 상품 카드에 NEW 표시를 붙입니다. */
     new: boolean;
 }
+
+/** 목록 카드는 상세 설명이나 아직 확정되지 않은 사이즈 정보가 필요하지 않습니다. */
+export type ProductListItem = Pick<
+    Product,
+    | 'id'
+    | 'categoryId'
+    | 'categoryName'
+    | 'name'
+    | 'images'
+    | 'listPrice'
+    | 'salePrice'
+    | 'new'
+> & {
+    /** 신상품순 정렬에 사용하는 상품 등록 시각입니다. */
+    createdAt: string;
+};

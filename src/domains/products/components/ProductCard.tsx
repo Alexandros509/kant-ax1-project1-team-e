@@ -1,22 +1,20 @@
 /**
  * 상품 한 개의 대표 이미지·호버 이미지·분류명·이름·가격 영역을 구성합니다.
- * ProductGrid에서 상품 객체와 정보 상시 표시 여부를 전달받습니다.
- * 이미지 전환과 정보 노출은 CSS의 group-hover로 처리하므로 별도 useState가 필요 없습니다.
+ * ProductGrid에서 상품 객체를 전달받고 상품 정보는 항상 표시합니다.
+ * 이미지 전환은 CSS의 group-hover와 group-focus-visible로 처리합니다.
  */
 // Image는 Next.js의 이미지 컴포넌트, Link는 앱 내부 주소 이동에 사용하는 컴포넌트입니다.
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Product } from '@/domains/products/types/product.types';
+import type { ProductListItem } from '@/domains/products/types/product.types';
 import { formatPrice } from '@/shared/utils/formatPrice';
 
 interface ProductCardProps {
-    /** Product 타입을 따르는 상품 하나입니다. 목록 전체가 아닌 객체 한 개를 받습니다. */
-    product: Product;
-    /** true: 상품 정보를 항상 표시 / false: 카드에 마우스를 올릴 때 표시합니다. */
-    showInfo: boolean;
+    /** 목록에 필요한 상품 하나입니다. */
+    product: ProductListItem;
 }
 
-export default function ProductCard({ product, showInfo }: ProductCardProps) {
+export default function ProductCard({ product }: ProductCardProps) {
     // find는 조건에 맞는 첫 번째 이미지 객체를 찾으며, 없으면 undefined를 반환합니다.
     // location이 product_main이고 url이 있는 파일을 대표 이미지로 선택합니다.
     // ?.url은 결과가 있을 때만 주소를 꺼내므로 찾지 못해도 속성 접근 오류가 나지 않습니다.
@@ -48,8 +46,8 @@ export default function ProductCard({ product, showInfo }: ProductCardProps) {
             {/*
              * relative는 fill 이미지와 absolute NEW 배지의 위치 기준입니다.
              * aspect-[4/5]는 가로:세로 비율을 4:5로 유지합니다.
-             * overflow-hidden은 확대된 이미지가 영역 밖으로 나가지 않게 자릅니다.
-             * bg-neutral-100은 이미지 영역의 연한 회색 배경입니다.
+             * overflow-hidden은 이미지가 카드 영역 밖으로 나가지 않게 합니다.
+             * bg-white는 이미지 영역의 흰색 배경입니다.
              */}
             <div className="relative aspect-[4/5] overflow-hidden bg-white">
                 {/* 대표 주소가 있으면 이미지들을, 없으면 안내 문구를 표시하는 조건문입니다. */}
@@ -61,15 +59,15 @@ export default function ProductCard({ product, showInfo }: ProductCardProps) {
                          * sizes는 브라우저가 이미지 파일 크기를 선택할 때 참고하는 예상 표시 너비입니다.
                          * sizes가 실제 카드 너비나 열 개수를 결정하는 것은 아닙니다.
                          * 현재 sizes는 고정된 안내값이며 3·4·6열 선택값에 맞춰 바뀌지는 않습니다.
-                         * transition-transform·duration-300은 확대 변화를 300ms 동안 처리합니다.
-                         * motion-safe는 모션 감소를 요청하지 않은 환경에서만 1.05배 확대합니다.
+                         * 다른 이미지가 있을 때만 대표 이미지를 300ms 동안 숨겨 전환합니다.
+                         * 다른 이미지가 없으면 대표 이미지를 그대로 유지합니다.
                          */}
                         <Image
                             src={imageUrl}
                             alt={product.name}
                             fill
                             sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, (max-width: 1439px) 25vw, 320px"
-                            className="object-contain transition-transform duration-300 motion-safe:group-hover:scale-105"
+                            className={`object-contain transition-opacity duration-300 ${hoverImageUrl ? 'group-hover:opacity-0 group-focus-visible:opacity-0' : ''}`}
                         />
                         {/*
                          * &&는 호버 주소가 있을 때만 오른쪽 Image를 렌더링하는 조건부 표현입니다.
@@ -77,7 +75,8 @@ export default function ProductCard({ product, showInfo }: ProductCardProps) {
                          * 나중에 배치한 호버 이미지는 기본 이미지 위에 나타납니다.
                          * opacity-0으로 숨겼다가 카드 hover 시 opacity-100으로 표시합니다.
                          * transition-opacity는 불투명도 변화를 300ms 동안 부드럽게 처리합니다.
-                         * 기본 이미지를 제거하거나 숨기지는 않으므로 투명한 부분에는 아래 이미지가 보입니다.
+                         * 대표 이미지도 함께 숨겨 투명한 부분에 두 이미지가 겹쳐 보이지 않게 합니다.
+                         * 키보드로 카드에 초점을 맞췄을 때도 같은 이미지를 보여줍니다.
                          */}
                         {hoverImageUrl && (
                             <Image
@@ -85,7 +84,7 @@ export default function ProductCard({ product, showInfo }: ProductCardProps) {
                                 alt={`${product.name} 다른 모습`}
                                 fill
                                 sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
-                                className="object-contain opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                                className="object-contain opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
                             />
                         )}
                     </>
@@ -96,22 +95,17 @@ export default function ProductCard({ product, showInfo }: ProductCardProps) {
                 )}
                 {/* 신상품일 때만 NEW 배지를 이미지 왼쪽 위에 겹쳐 표시합니다. */}
                 {product.new && (
-                    <span className="absolute top-3 left-3 bg-white px-2 py-1 text-[10px] font-semibold tracking-wider opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100">
+                    <span className="absolute top-3 left-3 bg-white px-2 py-1 text-[10px] font-semibold tracking-wider">
                         NEW
                     </span>
                 )}
             </div>
 
             {/*
-             * 상품 정보 영역입니다. showInfo가 true(3열 버튼 선택)이면 항상 표시합니다.
-             * false(4·6열 버튼 선택)이면 기본적으로 숨기고 카드 hover 시 표시합니다.
-             * opacity는 투명도만 바꾸므로 숨겨져도 이 영역의 자리와 링크 영역은 유지됩니다.
+             * 상품 정보는 열 개수나 hover 여부와 관계없이 항상 표시합니다.
              * mt-4는 이미지 아래 여백, space-y-2는 내부 요소 사이 세로 간격입니다.
-             * 키보드 초점에 따른 정보 노출 조건은 현재 구현 범위에 포함하지 않았습니다.
              */}
-            <div
-                className={`mt-4 space-y-2 transition-opacity duration-300 ${showInfo ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-            >
+            <div className="mt-4 space-y-2">
                 {/* 분류명: 작은 회색 글자와 넓은 글자 간격으로 표시합니다. */}
                 <p className="text-[11px] tracking-wider text-neutral-500">
                     {product.categoryName}
