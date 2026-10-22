@@ -19,6 +19,11 @@
 
 # production
 /build
+/.local/
+
+# Local database inspection snapshots
+/supabase/reference/before-reset-details.json
+/supabase/reference/before-reset-inventory.json
 
 # misc
 .DS_Store

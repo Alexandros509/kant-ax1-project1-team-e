@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { formatPrice } from '@/shared/utils/formatPrice';
 import type { CartItem } from '@/domains/cart/types/cart.types';
 
@@ -34,12 +35,12 @@ export default function CartSummary({ items }: CartSummaryProps) {
                 TAXES, DISCOUNTS & SHIPPING CALCULATED AT CHECKOUT.
             </p>
 
-            <button
-                type="button"
-                className="mt-6 w-full bg-black px-4 py-3 text-sm font-medium text-white hover:bg-gray-800"
+            <Link
+                href="/checkout"
+                className="mt-6 flex w-full justify-center bg-black px-4 py-3 text-sm font-medium text-white hover:bg-gray-800"
             >
                 CHECKOUT
-            </button>
+            </Link>
         </section>
     );
 }

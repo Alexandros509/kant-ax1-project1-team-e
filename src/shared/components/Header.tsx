@@ -1,5 +1,5 @@
 'use client';
-import { useSyncExternalStore } from 'react';
+import { Suspense, useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -32,11 +32,17 @@ function getServerIsOverHero() {
     return false;
 }
 
-export default function Header() {
-    const totalQuantity = useCounterStore((state) =>
-        state.cartItems.reduce((total, item) => total + item.quantity, 0),
+function HeaderBackground({ isTransparent = false }) {
+    return (
+        <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 -z-10 transition-colors duration-300 group-has-[nav.group:hover]/header:bg-black ${isTransparent ? 'bg-transparent' : 'bg-black'}`}
+        />
     );
-    const { user, signOut } = useAuthUser();
+}
+
+// URL을 기다리는 동안에도 헤더 메뉴는 미리 렌더링하고 배경만 기본 검정색으로 표시함
+function RouteAwareHeaderBackground() {
     const isHome = usePathname() === '/';
     const isOverHero = useSyncExternalStore(
         subscribeViewport,
@@ -46,13 +52,30 @@ export default function Header() {
     // 인덱스에서 헤더가 영상 위에 있을 때만 배경을 투명하게 해서 영상 전체가 보이게 함
     const isTransparent = isHome && isOverHero;
 
+    return <HeaderBackground isTransparent={isTransparent} />;
+}
+
+export default function Header() {
+    useEffect(() => {
+        void Promise.resolve(useCounterStore.persist.rehydrate()).finally(
+            () => {
+                useCounterStore.setState({ hasHydrated: true });
+            },
+        );
+    }, []);
+    const totalQuantity = useCounterStore((state) =>
+        state.cartItems.reduce((total, item) => total + item.quantity, 0),
+    );
+    const { user, signOut } = useAuthUser();
+
     return (
         /*
-         * has-[nav.group:hover]:bg-black: 카테고리 드롭다운이 열리는 동안에는 투명 상태여도 헤더를 검정으로 바꿔 드롭다운과 이어지게 함
+         * group/header: 카테고리 드롭다운이 열리면 배경 컴포넌트를 검정으로 바꿔 메뉴와 이어지게 함
          */
-        <header
-            className={`fixed inset-x-0 bottom-0 z-50 w-full text-white transition-colors duration-300 has-[nav.group:hover]:bg-black ${isTransparent ? 'bg-transparent' : 'bg-black'}`}
-        >
+        <header className="group/header fixed inset-x-0 bottom-0 isolate z-50 w-full text-white">
+            <Suspense fallback={<HeaderBackground />}>
+                <RouteAwareHeaderBackground />
+            </Suspense>
             <div className="grid h-15 grid-cols-[1fr_auto_1fr] items-center px-5">
                 {/*
                  * group: 버튼과 드롭다운 메뉴를 하나의 hover 영역으로 묶음
@@ -85,7 +108,7 @@ export default function Header() {
                         {/*
                          * grid-cols-5: 메뉴를 같은 너비의 5개 열로 나누며 gap-8로 열 사이에 32px 간격을 적용함
                          * ALL PRODUCTS는 /products로, 대분류 제목과 소분류는 /products?category=카테고리ID로 이동함
-                         * 카테고리 ID는 MOCK_CATEGORIES와 같음 (예: Outer는 1, Jackets는 11)
+                         * 카테고리 ID는 카탈로그 초기 데이터와 같음 (예: Outer는 1, Jackets는 11)
                          */}
                         <div className="grid grid-cols-5 gap-8">
                             {/* flex-col: 제목과 링크를 세로로 배치하며 gap-3으로 항목 사이에 12px 간격을 적용함 */}
