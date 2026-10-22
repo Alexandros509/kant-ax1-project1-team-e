@@ -14,6 +14,29 @@ import { formatPrice } from '@/shared/utils/formatPrice';
 import { useState } from 'react';
 // 클릭하면 칸 안에서 확대되고, 확대 상태에서 드래그로 이동하는 이미지 칸
 import ZoomableImage from '@/domains/products/components/ZoomableImage';
+// 하단 가로 상품 줄 (YOU MAY ALSO LIKE) / 최근 본 상품 줄 (RECENTLY VIEWED)
+import ProductRail from '@/domains/products/components/ProductRail';
+import RecentlyViewedProducts from '@/domains/products/components/RecentlyViewedProducts';
+// SIZE GUIDE 버튼 + 사이즈 표 팝업, 상품 분류별 사이즈 표 데이터
+import SizeGuide from '@/domains/products/components/SizeGuide';
+import { SIZE_GUIDE_BY_CATEGORY_ID } from '@/domains/products/mocks/sizeGuide.mock';
+// 팀 공용 장바구니 저장소(헤더 CART 숫자·장바구니 서랍과 같은 데이터)와 장바구니 항목 타입
+import useCounterStore from '@/shared/store/useCounterStore';
+import type { CartItem } from '@/domains/cart/types/cart.types';
+
+// YOU MAY ALSO LIKE에 보여 줄 추천 상품 개수
+const RECOMMEND_COUNT = 4;
+
+/*
+ * 상세 페이지에서 담은 상품의 임시 옵션 ID 기준값
+ *
+ * 장바구니 항목은 productVariantId(옵션 ID)로 같은 옵션인지 구분함
+ * DB product_variants에 상품별 사이즈 옵션이 아직 없어서, 상품 id와 사이즈로 임시 번호를 만듦
+ * 예: 1번 상품 사이즈 2 → 100000 + 1 × 10 + 2 = 100012
+ * 큰 수에서 시작하는 이유: DB에 이미 있는 옵션 번호(1, 2, 3 …)와 겹치지 않게 하려고
+ * DB에 옵션이 등록되면 이 임시 번호 대신 실제 옵션 ID를 써야 결제까지 이어짐
+ */
+const TEMP_VARIANT_ID_BASE = 100000;
 
 /*
  * 리액트 컴포넌트: 화면 조각(JSX)을 return 하는 함수
@@ -59,6 +82,15 @@ export default function ProductDetail({ id }: ProductDetailProps) {
     const [selectedSize, setSelectedSize] = useState(''); // 선택한 사이즈. 처음은 선택 없음
     const [message, setMessage] = useState(''); // Add to cart 아래 안내 문구
 
+    /*
+     * 팀 공용 장바구니 저장소(zustand)에서 필요한 것만 꺼냄
+     * useCounterStore((state) => state.값): 저장소 전체 중 이 값만 사용 → 이 값이 바뀔 때만 다시 그림
+     * setCartItems: 장바구니 목록을 바꾸는 함수 (헤더 CART 숫자와 장바구니 서랍이 같이 바뀜)
+     * hasHydrated: 새로고침 후 브라우저에 저장된 장바구니를 다 불러왔는지 여부
+     */
+    const setCartItems = useCounterStore((state) => state.setCartItems);
+    const hasHydrated = useCounterStore((state) => state.hasHydrated);
+
     // 주소의 id와 같은 상품을 찾음. 없으면 undefined
     /*
      * 배열.find((항목) => 조건)	배열을 앞에서부터 보면서 조건이 참인 "첫 번째 하나"를 돌려줌
@@ -76,7 +108,7 @@ export default function ProductDetail({ id }: ProductDetailProps) {
      * return <p>...</p>	이 문구만 화면에 그리고 함수를 여기서 끝냄 (아래 코드는 실행 안 됨)
      *
      * 이 위치인 이유
-     * - useState 3줄보다 아래: Hook은 매번 같은 순서로 실행되어야 하므로 return보다 먼저 와야 함
+     * - 모든 Hook(useState 3개, useCounterStore 2개)보다 아래: Hook은 매번 같은 순서로 실행되어야 하므로 return보다 먼저 와야 함
      * - product.images를 쓰는 코드보다 위: 상품이 없는데 product.images를 읽으면 오류가 나기 때문
      * - 이 if를 지나면 TypeScript가 "아래에서는 product가 반드시 있다"고 알게 되어
      *   product.name 등에 빨간 밑줄이 생기지 않음
@@ -143,14 +175,85 @@ export default function ProductDetail({ id }: ProductDetailProps) {
      * if (selectedSize === '')	사이즈를 아직 안 골랐으면
      * return;	안내 문구만 바꾸고 함수를 여기서 끝냄 (아래 줄은 실행 안 됨)
      * `... ${selectedSize})`	백틱 문자열. ${ } 자리에 변수 값을 끼워 넣음
+     *
+     * 장바구니에 담는 순서
+     * 1. 상품 id + 사이즈로 옵션 번호(productVariantId)를 만듦
+     * 2. 장바구니에 같은 옵션이 이미 있으면 → 수량만 +1
+     * 3. 없으면 → 새 장바구니 항목(CartItem)을 만들어 목록 끝에 추가
+     * setCartItems((previousItems) => 새 목록): 직전 목록을 받아 새 목록을 돌려줌
+     *   (원본 배열을 직접 바꾸지 않고 새 배열을 만들어야 화면이 다시 그려짐)
      */
-    function handleAddToCart() {
+    const handleAddToCart = () => {
         if (selectedSize === '') {
             setMessage('사이즈를 선택해 주세요.');
             return;
         }
+        // 새로고침 직후 저장된 장바구니를 불러오기 전에 담으면, 불러온 값이 덮어써서 사라질 수 있음
+        if (!hasHydrated) {
+            setMessage(
+                '장바구니를 불러오는 중입니다. 잠시 후 다시 눌러 주세요.',
+            );
+            return;
+        }
+
+        const productVariantId =
+            TEMP_VARIANT_ID_BASE + product.id * 10 + Number(selectedSize);
+        // 장바구니 서랍에 보여 줄 대표 이미지 주소 (없으면 null)
+        const mainImageUrl =
+            product.images.find((image) => image.location === 'product_main')
+                ?.url ?? null;
+
+        setCartItems((previousItems) => {
+            // some: 하나라도 조건에 맞으면 true
+            const isAlreadyInCart = previousItems.some(
+                (item) => item.productVariantId === productVariantId,
+            );
+
+            if (isAlreadyInCart) {
+                return previousItems.map((item) =>
+                    item.productVariantId === productVariantId
+                        ? { ...item, quantity: item.quantity + 1 }
+                        : item,
+                );
+            }
+
+            const newItem: CartItem = {
+                // 장바구니 줄 번호: 지금 있는 번호 중 가장 큰 값 + 1 (비어 있으면 1)
+                id: Math.max(0, ...previousItems.map((item) => item.id)) + 1,
+                cartId: previousItems[0]?.cartId ?? 1,
+                productVariantId,
+                quantity: 1,
+                // 담은 시점의 판매가·상품명·옵션·이미지를 그대로 기록 (나중에 가격이 바뀌어도 유지)
+                unitPriceAtAdded: product.salePrice,
+                productNameAtAdded: product.name,
+                optionTextAtAdded: `SIZE ${selectedSize}`,
+                imageUrlAtAdded: mainImageUrl,
+            };
+            return [...previousItems, newItem];
+        });
         setMessage(`장바구니에 담았습니다. (사이즈 ${selectedSize})`);
-    }
+    };
+
+    /*
+     * YOU MAY ALSO LIKE 추천 상품
+     * 1. 같은 소분류(categoryId) 상품을 먼저
+     * 2. 나머지 상품을 그 뒤에 이어 붙임
+     * 3. 지금 보는 상품은 빼고 앞에서부터 RECOMMEND_COUNT개만 사용
+     */
+    const otherProducts = MOCK_PRODUCTS.filter(
+        (item) => item.id !== product.id,
+    );
+    const recommendedProducts = [
+        ...otherProducts.filter(
+            (item) => item.categoryId === product.categoryId,
+        ),
+        ...otherProducts.filter(
+            (item) => item.categoryId !== product.categoryId,
+        ),
+    ].slice(0, RECOMMEND_COUNT);
+
+    // 이 상품 분류에 맞는 사이즈 표. 신발·가방·액세서리처럼 표가 없으면 undefined → SIZE GUIDE 버튼 숨김
+    const sizeGuide = SIZE_GUIDE_BY_CATEGORY_ID[product.categoryId];
 
     /*
      * return ( JSX ): 이 컴포넌트가 화면에 그릴 내용
@@ -162,7 +265,8 @@ export default function ProductDetail({ id }: ProductDetailProps) {
      * 최상위 태그는 하나여야 함 → 여기서는 <main>이 전체를 감쌈
      */
     return (
-        <main className="px-5">
+        // px-5: 좌우 여백 20px / pb-24: 마지막 상품 줄과 푸터 사이 96px
+        <main className="px-5 pb-24">
             {/*  상단 영역  */}
             <div className="wrapper flex flex-col gap-5 md:flex-row">
                 <div className="image flex w-full flex-col gap-5 md:w-1/2">
@@ -214,13 +318,14 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                         () => 를 쓰는 이유	setSelectedSize('1')처럼 괄호 안에 값을 넘겨야 해서
                                           onClick={setSelectedSize('1')}로 쓰면 클릭 전, 그리는 순간 바로 실행되어 버림
                         */}
-                        <div className="flex gap-4">
+                        {/* flex-wrap: 아주 좁은 화면(320px 등)에서는 SIZE GUIDE가 다음 줄로 내려가고 버튼은 정사각형 유지 */}
+                        <div className="flex flex-wrap items-center gap-4">
                             <button
                                 onClick={() => setSelectedSize('1')}
                                 className={
                                     selectedSize === '1'
-                                        ? 'size-6 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
-                                        : 'size-6 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
+                                        ? 'size-6 shrink-0 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
+                                        : 'size-6 shrink-0 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
                                 }
                             >
                                 1
@@ -229,8 +334,8 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                                 onClick={() => setSelectedSize('2')}
                                 className={
                                     selectedSize === '2'
-                                        ? 'size-6 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
-                                        : 'size-6 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
+                                        ? 'size-6 shrink-0 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
+                                        : 'size-6 shrink-0 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
                                 }
                             >
                                 2
@@ -239,8 +344,8 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                                 onClick={() => setSelectedSize('3')}
                                 className={
                                     selectedSize === '3'
-                                        ? 'size-6 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
-                                        : 'size-6 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
+                                        ? 'size-6 shrink-0 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
+                                        : 'size-6 shrink-0 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
                                 }
                             >
                                 3
@@ -249,12 +354,18 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                                 onClick={() => setSelectedSize('4')}
                                 className={
                                     selectedSize === '4'
-                                        ? 'size-6 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
-                                        : 'size-6 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
+                                        ? 'size-6 shrink-0 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
+                                        : 'size-6 shrink-0 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
                                 }
                             >
                                 4
                             </button>
+                            {/* 사이즈 표가 있는 상품만 SIZE GUIDE 버튼 표시. ml-auto: 남은 공간을 밀어 오른쪽 끝에 붙임 */}
+                            {sizeGuide && (
+                                <div className="ml-auto flex items-center">
+                                    <SizeGuide table={sizeGuide} />
+                                </div>
+                            )}
                         </div>
                         {/*
                         onClick={handleAddToCart}	위에서 만든 함수의 "이름"만 넘김 → 클릭할 때 리액트가 대신 실행
@@ -338,17 +449,33 @@ export default function ProductDetail({ id }: ProductDetailProps) {
             </div>
 
             {/*  하단 영역  */}
+            {/*
+            모델 착용 사진 3장: main의 px-5 안에서 한 줄 전체 폭(좌우 20px)을 3칸으로 똑같이 나눔
+            상단 왼쪽 이미지와 같은 ZoomableImage → 클릭하면 확대, 확대 상태에서 드래그로 이동
+            */}
             <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
-                {/* 상단 왼쪽 이미지와 같은 map 방식. modelImages(모델 착용 사진 3장)를 한 줄에 나열 */}
                 {modelImages.map((image) => (
-                    <img
+                    <ZoomableImage
                         key={image.id}
-                        className="aspect-[3/4] w-full object-cover"
-                        src={image.url}
+                        src={image.url ?? ''}
                         alt={`${product.name} 모델 착용 이미지 ${image.seq}`}
+                        fill
+                        className="aspect-[3/4]"
                     />
                 ))}
             </div>
+
+            {/* 추천 상품 줄: 같은 분류 상품을 먼저 보여 줌 */}
+            <ProductRail
+                title="You may also like"
+                products={recommendedProducts}
+            />
+
+            {/* 최근 본 상품 줄: 처음 방문이면 아무것도 안 나옴 */}
+            <RecentlyViewedProducts
+                currentProductId={product.id}
+                products={MOCK_PRODUCTS}
+            />
         </main>
     );
 }

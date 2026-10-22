@@ -245,6 +245,7 @@ export default function Header() {
                         alt="ONEPIECE" // 이미지를 대신해 읽을 수 있는 로고 이름을 제공함
                         fill // 부모 링크 영역을 채우도록 이미지를 배치함
                         sizes="160px" // 이미지 선택용 너비 힌트를 160px로 전달하며 실제 표시 너비를 변경하지 않음
+                        loading="eager" // 모든 화면 하단에 바로 보이는 로고라 지연 로딩하지 않음 (LCP 경고 해결)
                         className="object-contain brightness-0 invert" // 이미지 비율을 유지하며 brightness-0 invert로 불투명한 부분을 흰색으로 변환함
                     ></Image>
                 </Link>
