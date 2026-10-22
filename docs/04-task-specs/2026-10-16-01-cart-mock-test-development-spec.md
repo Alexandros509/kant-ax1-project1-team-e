@@ -1,6 +1,6 @@
 # ONEPIECE Cart Mock 테스트·화면 보완 작업 명세
 
-> 2026-10-16 회의 이후의 현재 작업 범위는 [Cart Drawer·Mock 데이터·GA4 테스트 환경 명세](./02-cart-drawer-mock-analytics-spec.md)를 우선합니다. 이 문서는 회의 전 계획과 수용 기준을 보존한 기록입니다. Drawer·실제 담기·로컬 분석 이벤트의 범위와 현재 Git 상태는 새 명세를 따릅니다.
+> 2026-10-16 회의 이후의 현재 작업 범위는 [Cart Drawer·Mock 데이터·GA4 테스트 환경 명세](./2026-10-16-02-cart-drawer-mock-analytics-spec.md)를 우선합니다. 이 문서는 회의 전 계획과 수용 기준을 보존한 기록입니다. Drawer·실제 담기·로컬 분석 이벤트의 범위와 현재 Git 상태는 새 명세를 따릅니다.
 
 - 작성일: 2026-10-16 / Asia/Seoul
 - 학습 분류: LV.2 / Week 9
@@ -213,7 +213,7 @@ git diff --stat
 ## 8. Git 작업 순서와 완료 단계
 
 1. 구현 시작 직전에 `git status --short --branch`와 최신 dev 상태를 다시 확인한다. 오래된 개인 브랜치의 변경을 확인 없이 적용하지 않는다.
-2. 현재 깨끗한 dev를 최신으로 갱신한 뒤 개인 작업 브랜치를 만든다. 제안 이름은 `jihyun/feat/cart-mock-validation`이며 아직 생성하지 않았다.
+2. 기존 변경을 보존하며 dev를 최신으로 갱신한 뒤 Cart Mock 검증 목적의 개인 작업 브랜치를 만든다.
 3. Mock 시나리오 하나, 화면 보완 하나씩 직접 작성하고 실제 동작을 확인한다.
 4. 변경 목록과 공용 파일 영향을 확인한다. 관계없는 파일은 포함하지 않는다.
 5. 변경 범위를 검토하고 Commit·Push·PR을 진행한다. PR base는 `dev`다.
