@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
+import useCartImageUrls from '@/domains/cart/components/useCartImageUrls';
 import type { CartItem } from '@/domains/cart/types/cart.types';
 
 const formatWon = (price: number) =>
@@ -22,6 +23,8 @@ export default function OrderSummary({
     busy,
     sdkReady,
 }: OrderSummaryProps) {
+    // Supabase 이미지는 저장 경로로 서명 URL을 새로 받아 표시한다.
+    const { getImageUrl, isImagePending } = useCartImageUrls(items);
     const quantity = items.reduce((total, item) => total + item.quantity, 0);
     const subtotal = items.reduce(
         (total, item) => total + item.unitPriceAtAdded * item.quantity,
@@ -55,18 +58,21 @@ export default function OrderSummary({
                         className="grid grid-cols-[62px_minmax(0,1fr)] items-center gap-4"
                     >
                         <div className="relative h-[78px] bg-gray-50">
-                            {item.imageUrlAtAdded ? (
+                            {getImageUrl(item) ? (
                                 <Image
-                                    src={item.imageUrlAtAdded}
+                                    src={getImageUrl(item) ?? ''}
                                     alt={item.productNameAtAdded}
                                     fill
                                     sizes="62px"
                                     className="object-contain"
                                 />
                             ) : (
-                                <span className="flex h-full items-center justify-center text-center text-[9px] text-gray-400">
-                                    이미지 없음
-                                </span>
+                                // 이미지 주소를 받는 중이면 빈 칸만 두고, 정말 없을 때만 안내 문구를 표시한다.
+                                !isImagePending(item) && (
+                                    <span className="flex h-full items-center justify-center text-center text-[9px] text-gray-400">
+                                        이미지 없음
+                                    </span>
+                                )
                             )}
                         </div>
                         <div className="min-w-0 break-words">

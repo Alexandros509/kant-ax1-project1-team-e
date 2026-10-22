@@ -8,13 +8,13 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Product } from '@/domains/products/types/product.types';
+import type { ProductListItem } from '@/domains/products/types/product.types';
 import { formatPrice } from '@/shared/utils/formatPrice';
 
-// title: 줄 위에 표시할 제목 / products: 가로로 나열할 상품 목록
+// title: 줄 위에 표시할 제목 / products: 가로로 나열할 상품 목록 (Supabase 상품 목록과 같은 카드용 타입)
 type ProductRailProps = {
     title: string;
-    products: Product[];
+    products: ProductListItem[];
 };
 
 export default function ProductRail({ title, products }: ProductRailProps) {

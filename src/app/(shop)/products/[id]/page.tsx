@@ -31,7 +31,7 @@ export default function ProductDetailPage({
                                             → ProductDetail({ id }) 형태로 받아야 함 (가이드 11번 ②)
             */}
             {params.then(({ id }) => (
-                <ProductDetail id={Number(id)} />
+                <ProductDetail key={id} id={Number(id)} />
             ))}
         </Suspense>
     );

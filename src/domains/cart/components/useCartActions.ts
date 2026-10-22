@@ -1,6 +1,7 @@
 'use client';
 
 import useCounterStore from '@/shared/store/useCounterStore';
+import { MAX_CART_QUANTITY } from '@/domains/cart/utils/addProductToCart';
 
 export default function useCartActions() {
     const setCartItems = useCounterStore((state) => state.setCartItems);
@@ -11,7 +12,13 @@ export default function useCartActions() {
             previousItems.map((item) =>
                 item.id === cartItemId
                     ? // 원본 객체를 직접 바꾸지 않고 선택한 상품만 새 객체로 만든다.
-                      { ...item, quantity: item.quantity + 1 }
+                      {
+                          ...item,
+                          quantity: Math.min(
+                              MAX_CART_QUANTITY,
+                              item.quantity + 1,
+                          ),
+                      }
                     : item,
             ),
         );
