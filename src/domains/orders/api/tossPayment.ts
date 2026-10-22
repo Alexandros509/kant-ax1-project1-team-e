@@ -20,10 +20,14 @@ export async function paymentApi<T>(url: string, body: unknown): Promise<T> {
     return data as T;
 }
 
-export function preparePayment(items: CartItem[], shipping: ShippingDetails) {
+export function preparePayment(
+    items: CartItem[],
+    shipping: ShippingDetails,
+    idempotencyKey: string,
+) {
     return paymentApi<PreparedTestPayment>('/api/payments/toss/prepare', {
+        idempotencyKey,
         items: items.map((item) => ({
-            cartItemId: item.id,
             productVariantId: item.productVariantId,
             quantity: item.quantity,
         })),

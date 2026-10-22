@@ -1,9 +1,5 @@
-import { cookies } from 'next/headers';
-
-import {
-    SESSION_COOKIE,
-    confirmTestPayment,
-} from '@/domains/orders/server/testPayment';
+import { confirmTestPayment } from '@/domains/orders/server/testPayment';
+import { requirePaymentUser } from '@/domains/orders/server/paymentDatabase';
 import {
     paymentErrorResponse,
     paymentRequestBody,
@@ -12,11 +8,8 @@ import {
 export async function POST(request: Request) {
     try {
         const body = await paymentRequestBody(request);
-        const cookieStore = await cookies();
-        const receipt = await confirmTestPayment(
-            body,
-            cookieStore.get(SESSION_COOKIE)?.value,
-        );
+        const user = await requirePaymentUser();
+        const receipt = await confirmTestPayment(body, user.id);
         return Response.json(receipt, {
             headers: { 'Cache-Control': 'no-store' },
         });

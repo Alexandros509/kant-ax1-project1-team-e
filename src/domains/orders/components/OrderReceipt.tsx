@@ -28,7 +28,9 @@ export default function OrderReceipt({
             <dl className="mt-10 space-y-5 rounded-xl border border-gray-200 p-5 text-xs sm:p-7">
                 <div className="flex flex-wrap justify-between gap-3">
                     <dt className="text-gray-500">주문번호</dt>
-                    <dd className="text-right break-all">{receipt.orderId}</dd>
+                    <dd className="text-right break-all">
+                        {receipt.orderNumber}
+                    </dd>
                 </div>
                 <div className="flex justify-between gap-4">
                     <dt className="text-gray-500">주문 상품</dt>
@@ -56,6 +58,12 @@ export default function OrderReceipt({
                     </dd>
                 </div>
             </dl>
+            <Link
+                href="/mypage"
+                className="mt-7 block text-center text-xs underline underline-offset-4"
+            >
+                주문·결제 내역 보기
+            </Link>
             <Link
                 href="/products"
                 className="mt-8 flex min-h-13 items-center justify-center rounded-lg bg-black px-7 py-4 text-xs text-white hover:bg-gray-800"

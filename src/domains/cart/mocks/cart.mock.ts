@@ -6,8 +6,8 @@ export const mockCartItems: CartItem[] = [
         cartId: 1,
         productVariantId: 1,
         quantity: 1,
-        unitPriceAtAdded: 189000, //장바구니 담은 시점의 가격
-        productNameAtAdded: 'ONEPIECE SHELL JACKET', //장바구니 담은 시점의 상품명
+        unitPriceAtAdded: 114460, // Supabase 데모 옵션 1: 블랙 집업 자켓
+        productNameAtAdded: '블랙 집업 자켓',
         optionTextAtAdded: 'BLACK / M', //장바구니 담은 시점의 옵션 텍스트
         imageUrlAtAdded: '/images/cart/outerJacketBlack.png', //장바구니 담은 시점의 이미지 URL
     },
@@ -16,9 +16,9 @@ export const mockCartItems: CartItem[] = [
         cartId: 1,
         productVariantId: 2,
         quantity: 1,
-        unitPriceAtAdded: 69000, //장바구니 담은 시점의 가격
-        productNameAtAdded: 'ONEPIECE T-SHIRT', //장바구니 담은 시점의 상품명
-        optionTextAtAdded: 'WHITE / L', //장바구니 담은 시점의 옵션 텍스트
+        unitPriceAtAdded: 56260,
+        productNameAtAdded: '블랙 반팔 티셔츠',
+        optionTextAtAdded: 'BLACK / L',
         imageUrlAtAdded: '/images/cart/topTShirtBlack.png', //장바구니 담은 시점의 이미지 URL
     },
     {
@@ -26,9 +26,9 @@ export const mockCartItems: CartItem[] = [
         cartId: 1,
         productVariantId: 3,
         quantity: 1,
-        unitPriceAtAdded: 69000, //장바구니 담은 시점의 가격
-        productNameAtAdded: 'ONEPIECE COAT', //장바구니 담은 시점의 상품명
-        optionTextAtAdded: 'BEIGE / L', //장바구니 담은 시점의 옵션 텍스트
+        unitPriceAtAdded: 153260,
+        productNameAtAdded: '아이보리 싱글 코트',
+        optionTextAtAdded: 'IVORY / L',
         imageUrlAtAdded: '/images/cart/outerCoatIvory.png', //장바구니 담은 시점의 이미지 URL
     },
 ];
