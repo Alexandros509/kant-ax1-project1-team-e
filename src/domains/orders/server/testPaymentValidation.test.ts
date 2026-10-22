@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-    quoteTestItems,
+    validateCheckoutItems,
     validateShipping,
     validateConfirmation,
     verifyApprovedPayment,
@@ -14,7 +14,7 @@ const shipping = {
     postalCode: '04524',
     addressLine1: '테스트 주소',
 };
-const item = { cartItemId: 1, productVariantId: 1, quantity: 2 };
+const item = { productVariantId: 1, quantity: 2 };
 const confirmation = {
     orderId: 'test_12345678-1234-1234-1234-123456789abc',
     paymentKey: 'test_payment_key',
@@ -26,27 +26,30 @@ const payment = {
     currency: 'KRW',
     status: 'DONE',
     method: '카드',
+    balanceAmount: confirmation.amount,
+    lastTransactionKey: 'transaction_test',
+    requestedAt: '2026-10-22T11:59:00+09:00',
     approvedAt: '2026-10-22T12:00:00+09:00',
 };
 
 describe('토스 테스트 결제 검증', () => {
-    it('브라우저가 보낸 가격·상품명은 무시하고 서버 테스트 상품 가격으로 계산한다', () => {
-        const quote = quoteTestItems([{ ...item, unitPrice: 1, name: '변조' }]);
-        assert.equal(quote.amount, 378000);
-        assert.equal(quote.items[0].name, 'ONEPIECE SHELL JACKET');
+    it('브라우저가 보낸 가격·상품명을 제거하고 옵션과 수량만 사용한다', () => {
+        assert.deepEqual(
+            validateCheckoutItems([{ ...item, unitPrice: 1, name: '변조' }]),
+            [item],
+        );
     });
-    it('없는 상품, 중복 옵션, 잘못된 장바구니 ID와 범위 밖 수량을 거부한다', () => {
+    it('잘못된 옵션 ID, 중복 옵션과 범위 밖 수량을 거부한다', () => {
         for (const items of [
             [],
-            [{ ...item, productVariantId: 999 }],
+            [{ ...item, productVariantId: -1 }],
             [item, item],
-            [{ ...item, cartItemId: 999 }],
             [{ ...item, quantity: 0 }],
             [{ ...item, quantity: -1 }],
             [{ ...item, quantity: 1.5 }],
             [{ ...item, quantity: 100 }],
         ]) {
-            assert.throws(() => quoteTestItems(items));
+            assert.throws(() => validateCheckoutItems(items));
         }
     });
     it('배송지 공백을 정리하고 필수 값·전화번호·우편번호를 검증한다', () => {
@@ -82,6 +85,11 @@ describe('토스 테스트 결제 검증', () => {
         assert.deepEqual(verifyApprovedPayment(payment, confirmation), {
             method: '카드',
             approvedAt: payment.approvedAt,
+            requestedAt: payment.requestedAt,
+            transactionKey: payment.lastTransactionKey,
+            balanceAmount: payment.balanceAmount,
+            receiptUrl: null,
+            approvalNumber: null,
         });
         for (const change of [
             { status: 'WAITING_FOR_DEPOSIT' },
@@ -91,6 +99,9 @@ describe('토스 테스트 결제 검증', () => {
             { orderId: 'other_order' },
             { paymentKey: 'other_key' },
             { approvedAt: 'invalid' },
+            { lastTransactionKey: null },
+            { balanceAmount: 0 },
+            { requestedAt: null },
         ]) {
             assert.throws(() =>
                 verifyApprovedPayment({ ...payment, ...change }, confirmation),

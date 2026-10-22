@@ -22,6 +22,7 @@ export default function CheckoutPage() {
     const [sdkReady, setSdkReady] = useState(false);
     const [busy, setBusy] = useState(false);
     const submitting = useRef(false);
+    const attempt = useRef<{ payload: string; key: string } | null>(null);
 
     async function handlePayment(shipping: ShippingDetails) {
         if (submitting.current) return;
@@ -29,8 +30,17 @@ export default function CheckoutPage() {
         setBusy(true);
         setPaymentMessage('');
         try {
-            const order = await preparePayment(cartItems, shipping);
+            const payload = JSON.stringify({ cartItems, shipping });
+            if (attempt.current?.payload !== payload) {
+                attempt.current = { payload, key: crypto.randomUUID() };
+            }
+            const order = await preparePayment(
+                cartItems,
+                shipping,
+                attempt.current.key,
+            );
             await openTestPayment(order);
+            attempt.current = null;
         } catch (error) {
             const canceled =
                 typeof error === 'object' &&
@@ -44,6 +54,7 @@ export default function CheckoutPage() {
                       ? error.message
                       : '결제창을 열지 못했습니다. 다시 시도해 주세요.',
             );
+            if (canceled) attempt.current = null;
         } finally {
             submitting.current = false;
             setBusy(false);
@@ -94,6 +105,17 @@ export default function CheckoutPage() {
                     <li>주문 완료</li>
                 </ol>
             </div>
+
+            <p className="mb-7 text-xs leading-6 text-gray-500">
+                로그인한 계정에 테스트 주문과 결제 내역이 저장됩니다.{' '}
+                <Link href="/login" className="underline underline-offset-4">
+                    로그인
+                </Link>
+                {' · '}
+                <Link href="/mypage" className="underline underline-offset-4">
+                    주문 내역
+                </Link>
+            </p>
 
             {!hasHydrated ? (
                 <p

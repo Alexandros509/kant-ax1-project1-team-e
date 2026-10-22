@@ -39,9 +39,8 @@ const useCounterStore = create<CartStore>()(
                         cartItems: state.cartItems.flatMap((item) => {
                             const purchased = receipt.items.find(
                                 (paid) =>
-                                    paid.cartItemId === item.id &&
                                     paid.productVariantId ===
-                                        item.productVariantId,
+                                    item.productVariantId,
                             );
                             const quantity =
                                 item.quantity - (purchased?.quantity ?? 0);
@@ -54,6 +53,30 @@ const useCounterStore = create<CartStore>()(
             name: 'onepiece-cart',
             storage: createJSONStorage(() => sessionStorage),
             skipHydration: true,
+            version: 1,
+            migrate: (persisted) => {
+                const previous = persisted as Partial<CartStore>;
+                return {
+                    ...previous,
+                    // Keep quantities/removals; refresh the old demo's catalog metadata.
+                    cartItems: Array.isArray(previous.cartItems)
+                        ? previous.cartItems.map((item) => {
+                              const catalog = mockCartItems.find(
+                                  (entry) =>
+                                      entry.productVariantId ===
+                                      item.productVariantId,
+                              );
+                              return catalog
+                                  ? {
+                                        ...catalog,
+                                        id: item.id,
+                                        quantity: item.quantity,
+                                    }
+                                  : item;
+                          })
+                        : mockCartItems,
+                };
+            },
             partialize: (state) => ({
                 cartItems: state.cartItems,
                 completedTestOrders: state.completedTestOrders,

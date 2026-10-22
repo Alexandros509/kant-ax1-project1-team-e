@@ -64,7 +64,9 @@ export default function LoginForm() {
             return;
         }
 
-        router.push('/');
+        // Only this known destination is accepted, avoiding arbitrary redirects.
+        const next = new URLSearchParams(window.location.search).get('next');
+        router.push(next === '/mypage' ? '/mypage' : '/');
     }
 
     return (

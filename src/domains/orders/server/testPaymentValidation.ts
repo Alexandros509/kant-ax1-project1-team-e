@@ -1,7 +1,6 @@
-import { mockCartItems } from '@/domains/cart/mocks/cart.mock';
 import type {
+    CheckoutItem,
     ShippingDetails,
-    TestPaymentItem,
 } from '@/domains/orders/types/order.types';
 
 export class PaymentError extends Error {
@@ -57,54 +56,33 @@ export function validateShipping(value: unknown): ShippingDetails {
     return shipping;
 }
 
-export function quoteTestItems(value: unknown): {
-    items: TestPaymentItem[];
-    amount: number;
-    orderName: string;
-} {
+export function validateCheckoutItems(value: unknown): CheckoutItem[] {
     if (!Array.isArray(value) || value.length < 1 || value.length > 30) {
         throw new PaymentError('INVALID_CART', '주문할 상품을 확인해 주세요.');
     }
     const seen = new Set<number>();
-    const items = value.map((entry) => {
+    return value.map((entry) => {
         const item = objectValue(entry);
-        const catalog = mockCartItems.find(
-            (candidate) => candidate.productVariantId === item.productVariantId,
-        );
         if (
-            !catalog ||
-            item.cartItemId !== catalog.id ||
-            seen.has(catalog.productVariantId) ||
+            !Number.isSafeInteger(item.productVariantId) ||
+            (item.productVariantId as number) < 1 ||
+            seen.has(item.productVariantId as number) ||
             !Number.isSafeInteger(item.quantity) ||
             (item.quantity as number) < 1 ||
             (item.quantity as number) > 99
         ) {
             throw new PaymentError(
                 'INVALID_CART',
-                '테스트 상품과 수량을 확인해 주세요.',
+                '상품 옵션과 수량을 확인해 주세요.',
             );
         }
-        seen.add(catalog.productVariantId);
-        // 브라우저가 보낸 가격·상품명은 사용하지 않고 서버의 테스트 상품 기준으로 계산한다.
+        seen.add(item.productVariantId as number);
+        // 가격과 상품명은 이 요청에 포함시키지 않고 DB에서 조회한다.
         return {
-            cartItemId: catalog.id,
-            productVariantId: catalog.productVariantId,
+            productVariantId: item.productVariantId as number,
             quantity: item.quantity as number,
-            name: catalog.productNameAtAdded,
-            option: catalog.optionTextAtAdded,
-            unitPrice: catalog.unitPriceAtAdded,
         };
     });
-    const amount = items.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0,
-    );
-    const orderName =
-        `${items[0].name}${items.length > 1 ? ` 외 ${items.length - 1}건` : ''}`.slice(
-            0,
-            100,
-        );
-    return { items, amount, orderName };
 }
 
 export function validateConfirmation(value: unknown) {
@@ -142,7 +120,15 @@ export function verifyApprovedPayment(
         payment.status !== 'DONE' ||
         typeof payment.approvedAt !== 'string' ||
         !Number.isFinite(Date.parse(payment.approvedAt)) ||
-        typeof payment.method !== 'string'
+        typeof payment.method !== 'string' ||
+        !payment.method.trim() ||
+        payment.method.length > 30 ||
+        typeof payment.lastTransactionKey !== 'string' ||
+        !payment.lastTransactionKey.length ||
+        payment.lastTransactionKey.length > 64 ||
+        payment.balanceAmount !== expected.amount ||
+        typeof payment.requestedAt !== 'string' ||
+        !Number.isFinite(Date.parse(payment.requestedAt))
     ) {
         throw new PaymentError(
             'PAYMENT_NOT_APPROVED',
@@ -150,5 +136,28 @@ export function verifyApprovedPayment(
             409,
         );
     }
-    return { method: payment.method, approvedAt: payment.approvedAt };
+    const receipt =
+        payment.receipt && typeof payment.receipt === 'object'
+            ? (payment.receipt as Record<string, unknown>)
+            : null;
+    const card =
+        payment.card && typeof payment.card === 'object'
+            ? (payment.card as Record<string, unknown>)
+            : null;
+    return {
+        method: payment.method,
+        approvedAt: payment.approvedAt,
+        requestedAt: payment.requestedAt,
+        transactionKey: payment.lastTransactionKey,
+        balanceAmount: payment.balanceAmount,
+        receiptUrl:
+            typeof receipt?.url === 'string' &&
+            receipt.url.startsWith('https://')
+                ? receipt.url
+                : null,
+        approvalNumber:
+            typeof card?.approveNo === 'string' && card.approveNo.length <= 8
+                ? card.approveNo
+                : null,
+    };
 }
