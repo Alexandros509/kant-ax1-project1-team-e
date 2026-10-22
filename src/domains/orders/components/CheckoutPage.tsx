@@ -13,6 +13,8 @@ import type { ShippingDetails } from '@/domains/orders/types/order.types';
 import CheckoutForm from '@/domains/orders/components/CheckoutForm';
 import OrderSummary from '@/domains/orders/components/OrderSummary';
 import useCounterStore from '@/shared/store/useCounterStore';
+import { getSupabaseClient } from '@/shared/lib/supabase/client';
+import { checkCartAvailability } from '@/domains/cart/api/checkCartAvailability';
 
 export default function CheckoutPage() {
     const cartItems = useCounterStore((state) => state.cartItems);
@@ -30,6 +32,12 @@ export default function CheckoutPage() {
         setBusy(true);
         setPaymentMessage('');
         try {
+            const supabase = getSupabaseClient();
+            if (!supabase)
+                throw new Error(
+                    '상품 옵션을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                );
+            await checkCartAvailability(supabase, cartItems);
             const payload = JSON.stringify({ cartItems, shipping });
             if (attempt.current?.payload !== payload) {
                 attempt.current = { payload, key: crypto.randomUUID() };

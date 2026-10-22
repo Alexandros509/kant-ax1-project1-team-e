@@ -15,7 +15,7 @@
 // useEffect: 화면을 그린 "뒤에" 실행할 일 / useSyncExternalStore: React 바깥의 값(저장소)을 읽어 오는 함수
 import { useEffect, useSyncExternalStore } from 'react';
 import ProductRail from '@/domains/products/components/ProductRail';
-import type { Product } from '@/domains/products/types/product.types';
+import type { ProductListItem } from '@/domains/products/types/product.types';
 
 // 브라우저 저장소에 저장할 때 쓰는 이름(키)
 const STORAGE_KEY = 'onepiece-recently-viewed';
@@ -70,7 +70,7 @@ function subscribe(onChange: () => void) {
 // currentProductId: 지금 보는 상품 id / products: 전체 상품 목록 (id로 상품 정보를 찾을 때 사용)
 type RecentlyViewedProductsProps = {
     currentProductId: number;
-    products: Product[];
+    products: ProductListItem[];
 };
 
 export default function RecentlyViewedProducts({
@@ -103,7 +103,7 @@ export default function RecentlyViewedProducts({
     const viewedProducts = readIds(raw)
         .filter((id) => id !== currentProductId)
         .map((id) => products.find((product) => product.id === id))
-        .filter((product): product is Product => product !== undefined);
+        .filter((product): product is ProductListItem => product !== undefined);
 
     // 목록이 비어 있으면(처음 방문) ProductRail이 아무것도 그리지 않음
     return <ProductRail title="Recently viewed" products={viewedProducts} />;
