@@ -97,13 +97,15 @@ export default function CartDrawer({ totalQuantity }: CartDrawerProps) {
                             VIEW CART
                         </DialogClose>
 
-                        <button
-                            type="button"
-                            disabled
-                            className="flex w-full items-center justify-center border border-black bg-black px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed"
-                        >
-                            CHECKOUT
-                        </button>
+                        {cartItems.length > 0 && (
+                            <DialogClose
+                                nativeButton={false}
+                                render={<Link href="/checkout" />}
+                                className="flex w-full items-center justify-center border border-black bg-black px-4 py-3 text-sm font-medium text-white hover:bg-gray-800"
+                            >
+                                CHECKOUT
+                            </DialogClose>
+                        )}
                     </div>
                 </section>
             </DialogContent>
