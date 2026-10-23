@@ -6,14 +6,27 @@
 // import: 다른 파일에서 export한 것을 가져와 이 파일에서 쓸 수 있게 함
 // { 이름 }: 그 파일이 이름을 붙여 내보낸 것(named export)을 같은 이름으로 가져옴
 // @/: 프로젝트의 src 폴더를 뜻하는 줄임 경로 (tsconfig.json에 설정됨)
-// 팀 mock 상품 10개가 들어 있는 배열
-import { MOCK_PRODUCTS } from '@/shared/mocks/mockData';
-// 숫자 153260을 "153,260원" 글자로 바꿔 주는 팀 공용 함수
-import { formatPrice } from '@/shared/utils/formatPrice';
 // 상태를 만드는 함수 가져오기
 import { useState } from 'react';
 // 클릭하면 칸 안에서 확대되고, 확대 상태에서 드래그로 이동하는 이미지 칸
 import ZoomableImage from '@/domains/products/components/ZoomableImage';
+// 하단 가로 상품 줄 (YOU MAY ALSO LIKE) / 최근 본 상품 줄 (RECENTLY VIEWED)
+import ProductRail from '@/domains/products/components/ProductRail';
+import RecentlyViewedProducts from '@/domains/products/components/RecentlyViewedProducts';
+// SIZE GUIDE 버튼 + 사이즈 표 팝업
+import SizeGuide from '@/domains/products/components/SizeGuide';
+// Supabase에서 상품 상세·사이즈 옵션·전체 상품 목록을 불러오는 Hook
+import useProductDetail from '@/domains/products/hooks/useProductDetail';
+// 상품 분류별 사이즈 표 데이터
+import { SIZE_GUIDE_BY_CATEGORY_ID } from '@/domains/products/mocks/sizeGuide.mock';
+// 헤더·서랍과 공유하는 장바구니 저장소와 DB 옵션 담기 함수
+import useCounterStore from '@/shared/store/useCounterStore';
+import { addProductToCart } from '@/domains/cart/utils/addProductToCart';
+// 숫자 153260을 "153,260KRW" 글자로 바꿔 주는 팀 공용 함수
+import { formatPrice } from '@/shared/utils/formatPrice';
+
+// YOU MAY ALSO LIKE에 보여 줄 추천 상품 개수
+const RECOMMEND_COUNT = 4;
 
 /*
  * 리액트 컴포넌트: 화면 조각(JSX)을 return 하는 함수
@@ -52,105 +65,175 @@ export default function ProductDetail({ id }: ProductDetailProps) {
      *              (activeTab = 'shipping' 처럼 직접 대입하면 화면이 바뀌지 않음)
      * 처음값	컴포넌트가 처음 그려질 때 한 번만 쓰임
      *
-     * Hook 규칙: useState는 컴포넌트 함수 맨 위쪽에서, if·반복문 밖에서 호출해야 함
+     * Hook 규칙: Hook은 컴포넌트 함수 맨 위쪽에서, if·반복문 밖에서 호출해야 함
      *           (매번 같은 순서로 실행되어야 리액트가 어느 값이 어느 상태인지 구분함)
      */
     const [activeTab, setActiveTab] = useState('detail'); // 지금 열린 탭을 기억. 처음은 DETAILS
-    const [selectedSize, setSelectedSize] = useState(''); // 선택한 사이즈. 처음은 선택 없음
+    // 선택한 사이즈 옵션 번호(product_variants.id). 처음은 선택 없음(null)
+    const [selectedVariantId, setSelectedVariantId] = useState<number | null>(
+        null,
+    );
     const [message, setMessage] = useState(''); // Add to cart 아래 안내 문구
 
-    // 주소의 id와 같은 상품을 찾음. 없으면 undefined
     /*
-     * 배열.find((항목) => 조건)	배열을 앞에서부터 보면서 조건이 참인 "첫 번째 하나"를 돌려줌
-     * item	MOCK_PRODUCTS 안의 상품 하나 (이름은 아무거나 지어도 됨)
-     * item.id === id	그 상품의 id가 props로 받은 id와 같은가?
-     * 결과	찾으면 상품 객체 / 끝까지 못 찾으면 undefined (값이 없다는 뜻)
-     *
-     * filter와 차이: filter는 맞는 것 "전부"를 배열로, find는 맞는 것 "하나"를 그대로 돌려줌
+     * 팀 공용 장바구니 저장소(zustand)에서 필요한 것만 꺼냄
+     * useCounterStore((state) => state.값): 저장소 전체 중 이 값만 사용 → 이 값이 바뀔 때만 다시 그림
+     * setCartItems: 장바구니 목록을 바꾸는 함수 (헤더 CART 숫자와 장바구니 서랍이 같이 바뀜)
+     * hasHydrated: 새로고침 후 브라우저에 저장된 장바구니를 다 불러왔는지 여부
      */
-    const product = MOCK_PRODUCTS.find((item) => item.id === id);
+    const setCartItems = useCounterStore((state) => state.setCartItems);
+    const hasHydrated = useCounterStore((state) => state.hasHydrated);
 
-    // 상품이 없으면 안내 문구만 보여 주고 끝냄
     /*
-     * !product	product가 없으면(undefined) true  → 예: /products/99 처럼 없는 번호로 들어온 경우
-     * return <p>...</p>	이 문구만 화면에 그리고 함수를 여기서 끝냄 (아래 코드는 실행 안 됨)
+     * Supabase에서 상품 상세를 불러옴 (useProductDetail.ts 참고)
+     * state.status: 'loading' | 'error' | 'notFound' | 'success'
+     * retry: 실패했을 때 다시 불러오는 함수
+     */
+    const { state, retry } = useProductDetail(id);
+
+    /*
+     * 불러오는 중·실패·없는 상품이면 안내만 보여 주고 끝냄
      *
      * 이 위치인 이유
-     * - useState 3줄보다 아래: Hook은 매번 같은 순서로 실행되어야 하므로 return보다 먼저 와야 함
-     * - product.images를 쓰는 코드보다 위: 상품이 없는데 product.images를 읽으면 오류가 나기 때문
-     * - 이 if를 지나면 TypeScript가 "아래에서는 product가 반드시 있다"고 알게 되어
-     *   product.name 등에 빨간 밑줄이 생기지 않음
+     * - 모든 Hook(useState 3개, useCounterStore 2개, useProductDetail 1개)보다 아래:
+     *   Hook은 매번 같은 순서로 실행되어야 하므로 return보다 먼저 와야 함
+     * - product를 쓰는 코드보다 위: 데이터가 없는데 product.images를 읽으면 오류가 나기 때문
      */
-    if (!product) {
+    if (state.status === 'loading') {
+        return (
+            <p role="status" className="p-10 text-center text-sm">
+                상품을 불러오는 중입니다.
+            </p>
+        );
+    }
+    if (state.status === 'notFound') {
         return <p className="p-10">상품을 찾을 수 없습니다.</p>;
     }
-    // 상단 왼쪽: 상세 이미지 중 모델 사진이 아닌 것 (정면·뒷면·디테일 5장)
-    {
-        /* 
-    image.original_name	파일 이름 ('outerCoatIvoryModelFront.png')
-    .includes('Model')	이름 안에 Model이라는 글자가 있으면 true
-    !	반대로 뒤집기 → "Model이 없으면 true"
-    &&	앞뒤 조건이 둘 다 맞아야 남김 
-    */
+    if (state.status === 'error') {
+        return (
+            <div role="alert" className="space-y-4 p-10 text-center text-sm">
+                <p>상품을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>
+                <button
+                    type="button"
+                    onClick={retry}
+                    className="cursor-pointer rounded border px-4 py-2"
+                >
+                    다시 시도
+                </button>
+            </div>
+        );
     }
 
-    const productImages = product.images.filter(
-        (image) =>
-            image.location === 'product_desc' &&
-            !image.original_name.includes('Model'),
-    );
-    // 왼쪽에 실제로 보여 줄 이미지: 상세 이미지가 없으면 대표 이미지(product_main)로 대신함
+    // 여기부터는 state.status === 'success' → 상품 데이터가 반드시 있음
+    const { product, catalogProducts } = state;
+
+    // 서명 URL을 받은 이미지만 사용 (발급 실패한 파일은 빈 칸 대신 건너뜀)
+    const imagesWithUrl = product.images.filter((image) => image.url);
+
     /*
-     * 필요한 이유: 1번 코트만 상세 이미지(product_desc)가 있고, 2~10번 상품은 대표 이미지 1장뿐임
-     *            → productImages가 빈 배열이 되어 왼쪽이 빈칸으로 보이는 것을 막음
+     * 상단 왼쪽 이미지: 상세 이미지(role = 'detail')
+     * 상세 이미지가 없는 상품은 대표 이미지(role = 'main')로 대신해 왼쪽이 빈칸이 되지 않게 함
      *
      * 조건 ? A : B	삼항 연산자. 조건이 참이면 A, 거짓이면 B를 leftImages에 담음
-     * productImages.length > 0	상세 이미지가 1장 이상 있는가? (length = 배열 칸 수)
-     * ? productImages	있으면 상세 이미지 그대로 사용
-     * : product.images.filter(...)	없으면 대표 이미지(product_main)만 골라 사용
-     *
-     * 화면(JSX)에서는 productImages 대신 이 leftImages를 map으로 그림
      */
-    const leftImages =
-        productImages.length > 0
-            ? productImages
-            : product.images.filter(
-                  (image) => image.location === 'product_main',
-              );
-    // 하단: 상세 이미지 중 모델 착용 사진 (정면·측면·뒷면 3장)
-    /*
-     * 위의 productImages와 조건이 하나만 다름
-     * productImages	!image.original_name.includes('Model') → 파일 이름에 Model이 "없는" 것
-     * modelImages	image.original_name.includes('Model')  → 파일 이름에 Model이 "있는" 것
-     * → 같은 상세 이미지 8장을 상단 5장 / 하단 3장으로 나눔
-     *
-     * 주의: 파일 이름 규칙(모델 사진에는 Model이 들어감)에 기대는 방식
-     *      mockData.ts 72번 줄 주석처럼 파일명이 용도를 보장하지는 않으므로, 팀과 공유해 둘 것
-     * 모델 사진이 없는 상품(2~10번)은 빈 배열 → 하단 영역에 아무것도 안 나옴
-     */
-    const modelImages = product.images.filter(
-        (image) =>
-            image.location === 'product_desc' &&
-            image.original_name.includes('Model'),
+    const detailImages = imagesWithUrl.filter(
+        (image) => image.role === 'detail',
     );
+    const leftImages =
+        detailImages.length > 0
+            ? detailImages
+            : imagesWithUrl.filter((image) => image.role === 'main');
+    // 하단: 모델 착용 사진 (role = 'model'). 없는 상품은 빈 배열 → 하단 영역에 아무것도 안 나옴
+    const modelImages = imagesWithUrl.filter((image) => image.role === 'model');
+
+    /*
+     * 사이즈 옵션 (DB product_variants)
+     * 옵션이 하나뿐인 상품(가방·액세서리의 FREE)은 재고가 있으면 고르지 않아도 그 옵션이 선택된 것으로 봄
+     */
+    const variants = product.variants;
+    const activeVariantId =
+        variants.length === 1 &&
+        variants[0].sizeLabel === 'FREE' &&
+        variants[0].stockQuantity > 0
+            ? variants[0].id
+            : selectedVariantId;
+    const selectedVariant = variants.find(
+        (variant) => variant.id === activeVariantId,
+    );
+    // 재고가 있는 옵션이 하나라도 있는지 (모두 품절이면 담기 버튼을 끔)
+    const hasAvailableVariant = variants.some(
+        (variant) => variant.stockQuantity > 0,
+    );
+    // 할인 중일 때만 정가에 취소선을 그어 함께 표시
+    const isOnSale = product.salePrice < product.listPrice;
 
     // Add to cart를 눌렀을 때 실행
     /*
      * 이벤트 핸들러: 클릭 같은 사용자 행동이 일어났을 때 실행할 함수
      * handle + 대상 이름으로 짓는 것이 리액트 관례 (handleAddToCart = 장바구니 담기 처리)
      *
-     * 컴포넌트 함수 안에 만들었기 때문에 selectedSize, setMessage 같은 상태를 바로 쓸 수 있음
-     * if (selectedSize === '')	사이즈를 아직 안 골랐으면
-     * return;	안내 문구만 바꾸고 함수를 여기서 끝냄 (아래 줄은 실행 안 됨)
-     * `... ${selectedSize})`	백틱 문자열. ${ } 자리에 변수 값을 끼워 넣음
+     * 장바구니에 담는 순서
+     * 1. 고른 사이즈 옵션의 번호(DB product_variants.id)를 그대로 사용
+     * 2. 장바구니에 같은 옵션이 이미 있으면 → 수량만 +1
+     * 3. 없으면 → 새 장바구니 항목(CartItem)을 만들어 목록 끝에 추가
+     * setCartItems((previousItems) => 새 목록): 직전 목록을 받아 새 목록을 돌려줌
+     *   (원본 배열을 직접 바꾸지 않고 새 배열을 만들어야 화면이 다시 그려짐)
      */
-    function handleAddToCart() {
-        if (selectedSize === '') {
+    const handleAddToCart = () => {
+        if (!selectedVariant) {
             setMessage('사이즈를 선택해 주세요.');
             return;
         }
-        setMessage(`장바구니에 담았습니다. (사이즈 ${selectedSize})`);
-    }
+        // 새로고침 직후 저장된 장바구니를 불러오기 전에 담으면, 불러온 값이 덮어써서 사라질 수 있음
+        if (!hasHydrated) {
+            setMessage(
+                '장바구니를 불러오는 중입니다. 잠시 후 다시 눌러 주세요.',
+            );
+            return;
+        }
+
+        let nextMessage = '';
+        setCartItems((previousItems) => {
+            const result = addProductToCart(
+                previousItems,
+                product,
+                activeVariantId,
+            );
+            nextMessage = result.message;
+            return result.items;
+        });
+        setMessage(nextMessage);
+    };
+
+    /*
+     * YOU MAY ALSO LIKE 추천 상품 (Supabase 전체 상품 목록에서 고름)
+     * 1. 같은 소분류(categoryId) 상품을 먼저
+     * 2. 나머지 상품을 그 뒤에 이어 붙임
+     * 3. 지금 보는 상품은 빼고 앞에서부터 RECOMMEND_COUNT개만 사용
+     */
+    const otherProducts = catalogProducts.filter(
+        (item) => item.id !== product.id,
+    );
+    const recommendedProducts = [
+        ...otherProducts.filter(
+            (item) => item.categoryId === product.categoryId,
+        ),
+        ...otherProducts.filter(
+            (item) => item.categoryId !== product.categoryId,
+        ),
+    ].slice(0, RECOMMEND_COUNT);
+
+    // 이 상품 분류에 맞는 사이즈 표. 신발·가방·액세서리처럼 표가 없으면 undefined → SIZE GUIDE 버튼 숨김
+    const guide = SIZE_GUIDE_BY_CATEGORY_ID[product.categoryId];
+    // 숫자형 예시 실측표를 M/L에 임의로 대응시키지 않습니다.
+    const sizeGuide =
+        guide &&
+        variants.length > 0 &&
+        variants.every((variant) =>
+            guide.rows.some((row) => row.size === variant.sizeLabel),
+        )
+            ? guide
+            : undefined;
 
     /*
      * return ( JSX ): 이 컴포넌트가 화면에 그릴 내용
@@ -162,23 +245,21 @@ export default function ProductDetail({ id }: ProductDetailProps) {
      * 최상위 태그는 하나여야 함 → 여기서는 <main>이 전체를 감쌈
      */
     return (
-        <main className="px-5">
+        // px-5: 좌우 여백 20px / pb-24: 마지막 상품 줄과 푸터 사이 96px
+        <main className="px-5 pb-24">
             {/*  상단 영역  */}
             <div className="wrapper flex flex-col gap-5 md:flex-row">
                 <div className="image flex w-full flex-col gap-5 md:w-1/2">
                     {/*
                     배열.map((항목) => ( JSX ))	배열의 항목을 하나씩 꺼내 JSX를 하나씩 만들어 줌 (리액트에서 목록 그리는 기본 방법)
-                    image	productImages 안의 이미지 정보 객체 하나 (url, seq, id 등)
                     key={image.id}	목록의 각 항목을 구분하는 고유값. map으로 반복할 때 리액트가 꼭 요구함
-                                    (없으면 콘솔 경고, 순서가 바뀔 때 엉뚱한 항목을 다시 그릴 수 있음)
                     src={image.url}	따옴표 대신 { } → 고정 글자가 아니라 객체 안의 값을 넣음
-                    alt={`...${ }...`}	백틱 문자열로 상품명과 순서를 끼워 넣은 설명 글
                     */}
                     {leftImages.map((image) => (
                         <ZoomableImage
                             key={image.id}
                             src={image.url ?? ''}
-                            alt={`${product.name} 상세 이미지 ${image.seq}`}
+                            alt={image.alt}
                             fill
                             className="aspect-[3/4]"
                         />
@@ -189,7 +270,7 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                     <div className="sticky top-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-10 md:top-[22vh] md:mx-auto md:w-[calc(41%+5.5rem)] md:gap-x-16">
                         {/*
                         {product.name}	product 객체 안의 name 값을 화면에 표시 ("아이보리 싱글 코트")
-                        {formatPrice(...)}	{ } 안에서는 함수도 실행 가능. 돌려준 결과("158,000원")가 표시됨
+                        {formatPrice(...)}	{ } 안에서는 함수도 실행 가능. 돌려준 결과가 표시됨
                         <del>	취소선 글자 (할인 전 정가)
                         */}
                         <div className="col-start-2 flex flex-col gap-2">
@@ -197,9 +278,11 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                                 {product.name}
                             </h2>
                             <h3>
-                                <del className="mr-2 text-neutral-400">
-                                    {formatPrice(product.listPrice)}
-                                </del>
+                                {isOnSale && (
+                                    <del className="mr-2 text-neutral-400">
+                                        {formatPrice(product.listPrice)}
+                                    </del>
+                                )}
                                 {formatPrice(product.salePrice)}
                             </h3>
                             <h3 className="text-neutral-400 uppercase">색상</h3>
@@ -208,84 +291,93 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                             size
                         </div>
                         {/*
-                        사이즈 버튼 4개: 탭 버튼과 같은 방식 (아래 탭 주석의 onClick·삼항 연산자 설명 참고)
-                        onClick={() => setSelectedSize('1')}	누르면 선택한 사이즈 상태를 '1'로 바꿈 → 화면이 다시 그려짐
-                        selectedSize === '1' ? A : B	지금 선택된 사이즈가 '1'이면 검정 스타일(A), 아니면 회색 스타일(B)
-                        () => 를 쓰는 이유	setSelectedSize('1')처럼 괄호 안에 값을 넘겨야 해서
-                                          onClick={setSelectedSize('1')}로 쓰면 클릭 전, 그리는 순간 바로 실행되어 버림
+                        사이즈 버튼: DB 사이즈 옵션(variants)을 map으로 하나씩 그림
+                        onClick={() => setSelectedVariantId(variant.id)}	누르면 선택한 옵션 번호를 바꿈 → 화면이 다시 그려짐
+                        variant.id === activeVariantId ? A : B	선택된 옵션이면 검정 스타일(A), 아니면 회색 스타일(B)
+                        disabled: 재고가 0인 옵션은 누를 수 없고 취소선으로 표시
+                        flex-wrap: 좁은 화면이나 옵션이 많을 때 다음 줄로 내려가고 버튼은 정사각형 유지
                         */}
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => setSelectedSize('1')}
-                                className={
-                                    selectedSize === '1'
-                                        ? 'size-6 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
-                                        : 'size-6 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
-                                }
-                            >
-                                1
-                            </button>
-                            <button
-                                onClick={() => setSelectedSize('2')}
-                                className={
-                                    selectedSize === '2'
-                                        ? 'size-6 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
-                                        : 'size-6 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
-                                }
-                            >
-                                2
-                            </button>
-                            <button
-                                onClick={() => setSelectedSize('3')}
-                                className={
-                                    selectedSize === '3'
-                                        ? 'size-6 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
-                                        : 'size-6 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
-                                }
-                            >
-                                3
-                            </button>
-                            <button
-                                onClick={() => setSelectedSize('4')}
-                                className={
-                                    selectedSize === '4'
-                                        ? 'size-6 cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white'
-                                        : 'size-6 cursor-pointer rounded-sm bg-neutral-100 text-[10px] font-semibold hover:bg-neutral-200'
-                                }
-                            >
-                                4
-                            </button>
+                        <div
+                            role="group"
+                            aria-label="사이즈 선택"
+                            className="flex flex-wrap items-center gap-4"
+                        >
+                            {variants.length === 0 && (
+                                <p className="text-neutral-400">
+                                    현재 선택할 수 있는 사이즈가 없습니다.
+                                </p>
+                            )}
+                            {variants.map((variant) => (
+                                <button
+                                    key={variant.id}
+                                    type="button"
+                                    disabled={variant.stockQuantity <= 0}
+                                    aria-pressed={
+                                        variant.id === activeVariantId
+                                    }
+                                    onClick={() =>
+                                        setSelectedVariantId(variant.id)
+                                    }
+                                    className={
+                                        variant.id === activeVariantId
+                                            ? 'h-6 min-w-6 shrink-0 cursor-pointer rounded-sm bg-neutral-900 px-1.5 text-[10px] font-semibold text-white'
+                                            : 'h-6 min-w-6 shrink-0 cursor-pointer rounded-sm bg-neutral-100 px-1.5 text-[10px] font-semibold hover:bg-neutral-200 disabled:cursor-not-allowed disabled:text-neutral-300 disabled:line-through'
+                                    }
+                                >
+                                    {variant.sizeLabel}
+                                    {variant.stockQuantity <= 0 && (
+                                        <span className="sr-only"> 품절</span>
+                                    )}
+                                </button>
+                            ))}
+                            {/* 사이즈 표가 있는 상품만 SIZE GUIDE 버튼 표시. ml-auto: 남은 공간을 밀어 오른쪽 끝에 붙임 */}
+                            {sizeGuide && (
+                                <div className="ml-auto flex items-center">
+                                    <SizeGuide table={sizeGuide} />
+                                </div>
+                            )}
                         </div>
                         {/*
                         onClick={handleAddToCart}	위에서 만든 함수의 "이름"만 넘김 → 클릭할 때 리액트가 대신 실행
-                                                  넘길 값이 없어서 () => 없이 이름만 씀
-                                                  (handleAddToCart()처럼 괄호를 붙이면 그리는 순간 바로 실행됨)
+                        disabled: 고를 수 있는(재고가 있는) 사이즈가 하나도 없으면 담기 버튼을 끄고 SOLD OUT 표시
                         {message}	message 상태 값을 표시. setMessage로 바뀌면 이 글자도 자동으로 바뀜
                         */}
                         <div className="col-start-2 flex flex-col gap-2">
                             <button
+                                type="button"
                                 onClick={handleAddToCart}
-                                className="h-10 w-full cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white uppercase hover:bg-neutral-700"
+                                disabled={!hasAvailableVariant}
+                                className="h-10 w-full cursor-pointer rounded-sm bg-neutral-900 text-[10px] font-semibold text-white uppercase hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
                             >
-                                Add to cart
+                                {variants.length === 0
+                                    ? '구매 가능한 옵션 없음'
+                                    : hasAvailableVariant
+                                      ? 'Add to cart'
+                                      : 'Sold out'}
                             </button>
-                            <p className="min-h-4">{message}</p>
+                            {variants.length === 0 && (
+                                <p className="text-neutral-500">
+                                    현재 구매 가능한 옵션이 없습니다.
+                                </p>
+                            )}
+                            <p className="min-h-4" aria-live="polite">
+                                {message}
+                            </p>
                         </div>
                         <div className="col-start-2">
                             <div className="grid grid-cols-3 text-[10px]">
-                                {/* 
-                                onClick= "클릭하면" 
-                                { }	JavaScript 값
+                                {/*
+                                onClick= "클릭하면"
                                 () =>	"이 일을 해라" (화살표 함수, 클릭할 때 실행됨)
                                 setActiveTab('detail')	열린 탭을 'detail'로 바꿔라
 
                                 삼항 연산자(조건 ? 참일 때 : 거짓일 때)
-                                className={ }	따옴표 대신 중괄호: 고정 글자가 아니라 계산한 값을 클래스로 씀
                                 activeTab === 'detail'	지금 열린 탭이 detail인가?
                                 ? '...'	맞으면 굵고 진한 글자
                                 : '...'	아니면 연한 회색 글자
                                 */}
                                 <button
+                                    type="button"
                                     onClick={() => setActiveTab('detail')}
                                     className={
                                         activeTab === 'detail'
@@ -296,6 +388,7 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                                     Details
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => setActiveTab('productCare')}
                                     className={
                                         activeTab === 'productCare'
@@ -306,6 +399,7 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                                     Product Care
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => setActiveTab('shipping')}
                                     className={
                                         activeTab === 'shipping'
@@ -319,7 +413,6 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                                 <div className="col-span-3 py-4">
                                     {/*
                                     조건 && 값	조건이 참일 때만 값을 화면에 그림 (거짓이면 아무것도 안 그림)
-                                    activeTab === 'detail'	지금 열린 탭이 detail인가?
                                     → 세 줄 중 열린 탭과 이름이 같은 한 줄만 참이라 그 내용만 보임
                                     */}
                                     <p className="leading-[1.9] whitespace-pre-line">
@@ -338,17 +431,35 @@ export default function ProductDetail({ id }: ProductDetailProps) {
             </div>
 
             {/*  하단 영역  */}
-            <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
-                {/* 상단 왼쪽 이미지와 같은 map 방식. modelImages(모델 착용 사진 3장)를 한 줄에 나열 */}
-                {modelImages.map((image) => (
-                    <img
-                        key={image.id}
-                        className="aspect-[3/4] w-full object-cover"
-                        src={image.url}
-                        alt={`${product.name} 모델 착용 이미지 ${image.seq}`}
-                    />
-                ))}
-            </div>
+            {/*
+            모델 착용 사진: main의 px-5 안에서 한 줄 전체 폭(좌우 20px)을 3칸으로 똑같이 나눔
+            상단 왼쪽 이미지와 같은 ZoomableImage → 클릭하면 확대, 확대 상태에서 드래그로 이동
+            */}
+            {modelImages.length > 0 && (
+                <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+                    {modelImages.map((image) => (
+                        <ZoomableImage
+                            key={image.id}
+                            src={image.url ?? ''}
+                            alt={image.alt}
+                            fill
+                            className="aspect-[3/4]"
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* 추천 상품 줄: 같은 분류 상품을 먼저 보여 줌 */}
+            <ProductRail
+                title="You may also like"
+                products={recommendedProducts}
+            />
+
+            {/* 최근 본 상품 줄: 처음 방문이면 아무것도 안 나옴 */}
+            <RecentlyViewedProducts
+                currentProductId={product.id}
+                products={catalogProducts}
+            />
         </main>
     );
 }

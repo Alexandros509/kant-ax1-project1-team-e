@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { mockCartItems } from '@/domains/cart/mocks/cart.mock';
+import { resolveCartOwner } from '@/domains/cart/utils/cartOwner';
 import type { CartItem } from '@/domains/cart/types/cart.types';
 import type { TestPaymentReceipt } from '@/domains/orders/types/order.types';
 
@@ -12,14 +12,19 @@ interface CartStore {
     hasHydrated: boolean;
     completedTestOrders: string[];
     applyTestPayment: (receipt: TestPaymentReceipt) => void;
+    // 장바구니를 담은 회원 ID. 비회원이면 null.
+    cartOwnerId: string | null;
+    syncCartOwner: (userId: string | null) => void;
 }
 
 const useCounterStore = create<CartStore>()(
     persist(
         (set) => ({
-            cartItems: mockCartItems,
+            // 새 회원과 비회원 모두 빈 장바구니로 시작한다.
+            cartItems: [],
             hasHydrated: false,
             completedTestOrders: [],
+            cartOwnerId: null,
 
             // 상품 목록과 Header가 같은 변경 결과를 읽도록 공통 상태를 갱신한다.
             setCartItems: (update) => {
@@ -27,6 +32,17 @@ const useCounterStore = create<CartStore>()(
                     cartItems: update(state.cartItems),
                 }));
             },
+            syncCartOwner: (userId) =>
+                set((state) => {
+                    const { ownerId, clear } = resolveCartOwner(
+                        state.cartOwnerId,
+                        userId,
+                    );
+                    if (!clear && ownerId === state.cartOwnerId) return state;
+                    return clear
+                        ? { cartOwnerId: ownerId, cartItems: [] }
+                        : { cartOwnerId: ownerId };
+                }),
             applyTestPayment: (receipt) =>
                 set((state) => {
                     if (state.completedTestOrders.includes(receipt.orderId))
@@ -53,33 +69,18 @@ const useCounterStore = create<CartStore>()(
             name: 'onepiece-cart',
             storage: createJSONStorage(() => sessionStorage),
             skipHydration: true,
-            version: 1,
-            migrate: (persisted) => {
-                const previous = persisted as Partial<CartStore>;
-                return {
-                    ...previous,
-                    // Keep quantities/removals; refresh the old demo's catalog metadata.
-                    cartItems: Array.isArray(previous.cartItems)
-                        ? previous.cartItems.map((item) => {
-                              const catalog = mockCartItems.find(
-                                  (entry) =>
-                                      entry.productVariantId ===
-                                      item.productVariantId,
-                              );
-                              return catalog
-                                  ? {
-                                        ...catalog,
-                                        id: item.id,
-                                        quantity: item.quantity,
-                                    }
-                                  : item;
-                          })
-                        : mockCartItems,
-                };
-            },
+            version: 2,
+            // 이전 버전은 데모 상품 3개를 기본으로 넣었으므로, 누가 담았는지 알 수 없는
+            // 예전 장바구니는 한 번 비운다.
+            migrate: (persisted) => ({
+                ...(persisted as Partial<CartStore>),
+                cartItems: [],
+                cartOwnerId: null,
+            }),
             partialize: (state) => ({
                 cartItems: state.cartItems,
                 completedTestOrders: state.completedTestOrders,
+                cartOwnerId: state.cartOwnerId,
             }),
         },
     ),
