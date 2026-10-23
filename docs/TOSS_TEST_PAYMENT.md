@@ -9,16 +9,15 @@
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=프로젝트_URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=공개_키
-SUPABASE_SECRET_KEY=서버_전용_키
 NEXT_PUBLIC_TOSS_CLIENT_KEY=테스트_클라이언트_키
 TOSS_SECRET_KEY=테스트_시크릿_키
 ```
 
-- Supabase 서버 키: 프로젝트 **Settings → API Keys → Secret keys**의 기존 `sb_secret_...` 키를 사용합니다. 기존 프로젝트의 legacy `service_role` 키도 서버 전용 값으로 사용할 수 있습니다. 공개 publishable/anon 키를 이 항목에 넣으면 안 됩니다.
+- Supabase 서버 키(`SUPABASE_SECRET_KEY`)는 필요하지 않습니다. 주문·결제 저장은 로그인 회원의 세션으로 실행하고, DB 함수가 `auth.uid()`로 회원을 확인합니다.
 - 토스 키: [개발자센터](https://developers.tosspayments.com/)에서 같은 상점·같은 종류의 테스트 키 한 쌍을 사용합니다.
 - `test_gck_` / `test_gsk_`: 주문서형·결제창형 `widgets.renderPaymentWindow()`.
 - `test_ck_` / `test_sk_`: API 개별 연동 `payment.requestPayment()` 통합결제창.
-- 서버 키와 토스 시크릿 키에는 `NEXT_PUBLIC_`을 붙이지 않습니다. 키는 소스·채팅·Git에 올리지 않습니다. `.env.local`은 추적에서 제외됩니다.
+- 토스 시크릿 키에는 `NEXT_PUBLIC_`을 붙이지 않습니다. 키는 소스·채팅·Git에 올리지 않습니다. `.env.local`은 추적에서 제외됩니다.
 - 설정 후 개발 서버를 재시작합니다. 배포 환경에서는 호스팅 서비스의 환경 변수에도 별도로 설정해야 합니다.
 
 ## 2. 데이터베이스 적용
@@ -28,8 +27,9 @@ TOSS_SECRET_KEY=테스트_시크릿_키
 Supabase SQL Editor에서 아래 순서로 실행합니다.
 
 1. `supabase/migrations/202610220001_test_checkout.sql`: 주문 준비·결제 키 연결·승인 저장 함수 4개를 추가합니다. 기존 데이터와 본인 조회 RLS를 유지합니다.
-2. `supabase/seed-checkout-demo.sql`: 현재 브라우저 데모 장바구니에 필요한 상품 옵션 3개를 추가합니다. 기존 상품을 재사용하고, 충돌하는 옵션 ID나 다른 상품 가격이 있으면 변경 없이 실패합니다.
-3. `supabase/tests/test-checkout.sql`: DB 가격 계산, 타 회원 접근 거부, 금액 변조 거부, 준비·승인 멱등성, 결제 키 변경 방지, 결제/거래 원자적 저장, 재고 유지, 클라이언트 RPC 차단을 확인합니다. 검증용 주문·결제·거래는 전부 `ROLLBACK`합니다. 최소 한 명의 기존 테스트 회원이 필요합니다.
+2. `supabase/migrations/202610220002_member_test_checkout.sql`: 로그인 회원이 서버 키 없이 호출하는 함수 3개(`prepare_my_test_checkout`, `bind_my_test_payment`, `complete_my_test_payment`)를 추가합니다. 회원 ID는 `auth.uid()`로만 정하고 비회원 호출은 막습니다.
+3. `supabase/seed-checkout-demo.sql`: 현재 브라우저 데모 장바구니에 필요한 상품 옵션 3개를 추가합니다. 기존 상품을 재사용하고, 충돌하는 옵션 ID나 다른 상품 가격이 있으면 변경 없이 실패합니다.
+4. `supabase/tests/test-checkout.sql`: DB 가격 계산, 타 회원 접근 거부, 금액 변조 거부, 준비·승인 멱등성, 결제 키 변경 방지, 결제/거래 원자적 저장, 재고 유지, 서버 전용 RPC 차단을 확인합니다. 검증용 주문·결제·거래는 전부 `ROLLBACK`합니다. 최소 한 명의 기존 테스트 회원이 필요합니다.
 
 데모 장바구니와 연결되는 옵션:
 
@@ -51,6 +51,8 @@ Supabase SQL Editor에서 아래 순서로 실행합니다.
 6. 완료 화면에서 **주문·결제 내역 보기** 또는 헤더의 **MY PAGE**로 이동합니다. `/mypage`에서 회원 정보와 본인의 최근 주문 50건을 확인하고 결제 상태별로 필터링할 수 있습니다. 기존 `/orders` 주소에서도 내역을 조회할 수 있습니다.
 7. 완료 페이지 새로고침·승인 재확인 시 중복 승인 거래나 중복 장바구니 차감이 없어야 합니다. 다른 계정에서는 기존 주문을 승인·조회할 수 없어야 합니다.
 
+테스트 전용 설정이므로 로그인 회원은 자기 주문에 한해 승인 저장 함수를 직접 호출할 수 있습니다. 실제 결제에 쓰려면 서버 전용 키 방식으로 되돌려야 합니다.
+
 토스 승인 후 DB 저장에 실패하면 완료로 표시하지 않습니다. 같은 결제 키와 DB에 보관한 승인 멱등키로 재시도하고, 토스 조회 API로 승인 결과를 복구하여 저장합니다. 승인 여부가 불명확한 상태는 성공/실패로 단정하지 않습니다.
 
 ## 저장 구조
@@ -68,8 +70,8 @@ Supabase SQL Editor에서 아래 순서로 실행합니다.
 
 ## 코드 위치
 
-- `src/shared/lib/supabase/server.ts`: 쿠키 기반 서버 인증 클라이언트와 별도 관리자 클라이언트
-- `src/domains/orders/server/paymentDatabase.ts`: 회원 검증, 서버 전용 RPC 호출·오류 처리
+- `src/shared/lib/supabase/server.ts`: 쿠키 기반 서버 인증 클라이언트
+- `src/domains/orders/server/paymentDatabase.ts`: 회원 검증, 회원 세션 RPC 호출·오류 처리
 - `src/domains/orders/server/testPayment.ts`: 테스트 키 검증, 주문 준비, 토스 승인·조회
 - `src/domains/orders/server/paymentWorkflow.ts`: DB 소유권·금액 검증 → 승인/조회 복구 → DB 저장
 - `src/domains/orders/server/testPaymentValidation.ts`: 요청과 토스 응답 검증
@@ -82,13 +84,12 @@ Supabase SQL Editor에서 아래 순서로 실행합니다.
 
 ## 문제 확인
 
-| 증상                         | 확인 내용                                                                       |
-| ---------------------------- | ------------------------------------------------------------------------------- |
-| 로그인 필요                  | 같은 호스트의 테스트 회원으로 로그인했는지 확인                                 |
-| Supabase 결제 저장 설정 필요 | `.env.local`의 `SUPABASE_SECRET_KEY`, 저장 여부, 서버 재시작 확인               |
-| 결제 마이그레이션 필요       | 위 SQL 마이그레이션 적용 여부 확인                                              |
-| 주문할 수 없는 상품 옵션     | 데모 옵션 SQL 또는 상품 판매 상태 확인                                          |
-| 상품 금액 변경               | DB 가격과 장바구니 표시 금액 확인. 준비 요청은 금액이 다르면 주문을 만들지 않음 |
-| 승인 상태 확인 실패          | 완료 화면의 승인 재확인. 새로운 결제보다 기존 결과 복구 우선                    |
+| 증상                     | 확인 내용                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| 로그인 필요              | 같은 호스트의 테스트 회원으로 로그인했는지 확인                                 |
+| 결제 마이그레이션 필요   | 위 SQL 마이그레이션 두 개의 적용 여부 확인                                      |
+| 주문할 수 없는 상품 옵션 | 데모 옵션 SQL 또는 상품 판매 상태 확인                                          |
+| 상품 금액 변경           | DB 가격과 장바구니 표시 금액 확인. 준비 요청은 금액이 다르면 주문을 만들지 않음 |
+| 승인 상태 확인 실패      | 완료 화면의 승인 재확인. 새로운 결제보다 기존 결과 복구 우선                    |
 
-공식 자료: [Supabase 서버 인증](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [서버 전용 API 키](https://supabase.com/docs/guides/api/api-keys), [토스 결제 API](https://docs.tosspayments.com/reference), [토스 멱등키·인증](https://docs.tosspayments.com/reference/using-api/authorization).
+공식 자료: [Supabase 서버 인증](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [토스 결제 API](https://docs.tosspayments.com/reference), [토스 멱등키·인증](https://docs.tosspayments.com/reference/using-api/authorization).
