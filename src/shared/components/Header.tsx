@@ -66,7 +66,7 @@ export default function Header() {
     const totalQuantity = useCounterStore((state) =>
         state.cartItems.reduce((total, item) => total + item.quantity, 0),
     );
-    const { user, isLoading } = useAuthUser();
+    const { user, isLoading, signOut } = useAuthUser();
     const hasHydrated = useCounterStore((state) => state.hasHydrated);
     const syncCartOwner = useCounterStore((state) => state.syncCartOwner);
     const userId = user?.id ?? null;
@@ -75,6 +75,14 @@ export default function Header() {
     useEffect(() => {
         if (hasHydrated && !isLoading) syncCartOwner(userId);
     }, [hasHydrated, isLoading, userId, syncCartOwner]);
+
+    async function handleSignOut() {
+        try {
+            await signOut();
+        } catch {
+            window.alert('로그아웃하지 못했습니다. 다시 시도해 주세요.');
+        }
+    }
 
     return (
         /*
@@ -281,20 +289,31 @@ export default function Header() {
                         <Search size={12} strokeWidth={1.5} />
                     </button>
 
-                    {/* 회원은 마이페이지에서 주문 조회와 로그아웃을 진행함 */}
+                    {/* 로그인 상태면 MY PAGE 링크와 LOGOUT 버튼을, 아니면 JOIN/LOGIN 링크를 표시함 */}
                     {isLoading ? (
                         <span
                             aria-label="로그인 상태 확인 중"
-                            className="h-4 w-14 animate-pulse rounded bg-white/15"
+                            className="h-4 w-28 animate-pulse rounded bg-white/15"
                         />
                     ) : user ? (
-                        <Link
-                            href="/mypage"
-                            aria-label="마이페이지"
-                            className="whitespace-nowrap"
-                        >
-                            MY PAGE
-                        </Link>
+                        <>
+                            <Link
+                                href="/mypage"
+                                aria-label="마이페이지"
+                                className="whitespace-nowrap"
+                            >
+                                MY PAGE
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={handleSignOut}
+                                aria-label="로그아웃"
+                                title={user.email}
+                                className="cursor-pointer whitespace-nowrap"
+                            >
+                                LOGOUT
+                            </button>
+                        </>
                     ) : (
                         <>
                             {/* JOIN 문구를 표시하며 href="/signup"으로 회원가입 페이지에 연결됨 */}
