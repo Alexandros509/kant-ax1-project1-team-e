@@ -64,9 +64,9 @@ export default function LoginForm() {
             return;
         }
 
-        // Only this known destination is accepted, avoiding arbitrary redirects.
+        // Only these known destinations are accepted, avoiding arbitrary redirects.
         const next = new URLSearchParams(window.location.search).get('next');
-        router.push(next === '/mypage' ? '/mypage' : '/');
+        router.push(next === '/mypage' || next === '/checkout' ? next : '/');
     }
 
     return (

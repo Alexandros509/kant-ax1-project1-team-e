@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import Script from 'next/script';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import useAuthUser from '@/domains/auth/hooks/useAuthUser';
 import {
     openTestPayment,
     preparePayment,
@@ -25,6 +27,13 @@ export default function CheckoutPage() {
     const [busy, setBusy] = useState(false);
     const submitting = useRef(false);
     const attempt = useRef<{ payload: string; key: string } | null>(null);
+    const { user, isLoading } = useAuthUser();
+    const router = useRouter();
+
+    // 결제는 회원만 할 수 있으므로, 비회원은 로그인 후 주문서로 돌아오게 한다.
+    useEffect(() => {
+        if (!isLoading && !user) router.replace('/login?next=/checkout');
+    }, [isLoading, user, router]);
 
     async function handlePayment(shipping: ShippingDetails) {
         if (submitting.current) return;
@@ -114,23 +123,14 @@ export default function CheckoutPage() {
                 </ol>
             </div>
 
-            <p className="mb-7 text-xs leading-6 text-gray-500">
-                로그인한 계정에 테스트 주문과 결제 내역이 저장됩니다.{' '}
-                <Link href="/login" className="underline underline-offset-4">
-                    로그인
-                </Link>
-                {' · '}
-                <Link href="/mypage" className="underline underline-offset-4">
-                    주문 내역
-                </Link>
-            </p>
-
-            {!hasHydrated ? (
+            {!hasHydrated || isLoading || !user ? (
                 <p
                     role="status"
                     className="py-20 text-center text-sm text-gray-500"
                 >
-                    주문 정보를 불러오는 중입니다…
+                    {!isLoading && !user
+                        ? '로그인 화면으로 이동합니다…'
+                        : '주문 정보를 불러오는 중입니다…'}
                 </p>
             ) : cartItems.length === 0 ? (
                 <section className="border-y border-gray-200 py-20 text-center">
