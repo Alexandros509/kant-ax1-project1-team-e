@@ -42,6 +42,6 @@ React / Next.js 쇼핑몰 UI
 ## 토스 테스트 결제
 
 한 화면형 주문서 오른쪽 결제 버튼에서 토스 SDK v2 결제창을 호출하고 서버에서 승인합니다.
-`.env.local`에 `NEXT_PUBLIC_TOSS_CLIENT_KEY`와 `TOSS_SECRET_KEY`를 같은 테스트 키 세트로 추가하세요.
-현재는 임시 장바구니와 로컬 테스트 주문을 사용하며 Supabase 주문·재고에는 반영하지 않습니다.
+토스 키는 설정하지 않아도 토스 공식 공개 테스트 키로 결제합니다. 내 상점 키를 쓰려면 `.env.local`에 `NEXT_PUBLIC_TOSS_CLIENT_KEY`와 `TOSS_SECRET_KEY`를 같은 테스트 키 세트로 넣으세요.
+로그인한 회원의 테스트 주문·결제는 Supabase에 저장되며 재고는 차감하지 않습니다.
 테스트 키 발급·환경 설정·동작 확인 방법은 [토스 테스트 결제 안내](docs/TOSS_TEST_PAYMENT.md)를 참고하세요.

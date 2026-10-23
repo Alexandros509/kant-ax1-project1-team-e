@@ -10,9 +10,23 @@ import {
 import { paymentRpc } from './paymentDatabase';
 import { confirmStoredPayment } from './paymentWorkflow';
 
+// 토스페이먼츠 공식 예제에 공개된 결제위젯 연동 테스트 키입니다.
+// 개발자센터 가입·로그인 없이 쓸 수 있고 실제 금액이 청구되지 않습니다.
+// 같은 예제의 API 개별 연동 공개 키(test_ck_D5GePW...)는 결제창 호출이 401로 거부되어 쓰지 않습니다.
+// @see https://github.com/tosspayments/tosspayments-sample (express-javascript)
+export const TOSS_PUBLIC_TEST_KEYS = {
+    clientKey: 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm',
+    secretKey: 'test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6',
+};
+
 export function testPaymentConfig() {
-    const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY?.trim() ?? '';
-    const secretKey = process.env.TOSS_SECRET_KEY?.trim() ?? '';
+    // 환경 변수에 키 한 쌍이 모두 있을 때만 그 키를 쓰고, 아니면 공개 테스트 키를 씁니다.
+    const envClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY?.trim() ?? '';
+    const envSecretKey = process.env.TOSS_SECRET_KEY?.trim() ?? '';
+    const { clientKey, secretKey } =
+        envClientKey && envSecretKey
+            ? { clientKey: envClientKey, secretKey: envSecretKey }
+            : TOSS_PUBLIC_TEST_KEYS;
     const window =
         clientKey.startsWith('test_gck_') && secretKey.startsWith('test_gsk_');
     const legacy =
