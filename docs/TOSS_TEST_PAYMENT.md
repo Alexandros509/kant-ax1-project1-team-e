@@ -9,16 +9,19 @@
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=프로젝트_URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=공개_키
-NEXT_PUBLIC_TOSS_CLIENT_KEY=테스트_클라이언트_키
-TOSS_SECRET_KEY=테스트_시크릿_키
+# 선택: 비워 두면 토스 공개 테스트 키를 사용합니다.
+NEXT_PUBLIC_TOSS_CLIENT_KEY=
+TOSS_SECRET_KEY=
 ```
 
 - Supabase 서버 키(`SUPABASE_SECRET_KEY`)는 필요하지 않습니다. 주문·결제 저장은 로그인 회원의 세션으로 실행하고, DB 함수가 `auth.uid()`로 회원을 확인합니다.
-- 토스 키: [개발자센터](https://developers.tosspayments.com/)에서 같은 상점·같은 종류의 테스트 키 한 쌍을 사용합니다.
+- 토스 키는 **설정하지 않아도 됩니다.** 두 값이 비어 있으면 토스 공식 예제([tosspayments-sample](https://github.com/tosspayments/tosspayments-sample))에 공개된 결제위젯 연동 테스트 키(`test_gck_docs_...` / `test_gsk_docs_...`)로 결제합니다. 같은 예제의 API 개별 연동 공개 키(`test_ck_D5GePW...`)는 결제창 호출이 401로 거부되어 쓰지 않습니다. 개발자센터 가입·로그인이 필요 없고 실제 금액은 청구되지 않습니다. 키 값은 `src/domains/orders/server/testPayment.ts`의 `TOSS_PUBLIC_TEST_KEYS`에 있습니다.
+- 공개 테스트 키는 누구나 쓰는 공용 상점이므로, 토스 상점 관리자에서 우리 결제 내역만 따로 보려면 [개발자센터](https://developers.tosspayments.com/)에서 받은 내 테스트 키 한 쌍을 두 값에 모두 넣습니다.
 - `test_gck_` / `test_gsk_`: 주문서형·결제창형 `widgets.renderPaymentWindow()`.
 - `test_ck_` / `test_sk_`: API 개별 연동 `payment.requestPayment()` 통합결제창.
 - 토스 시크릿 키에는 `NEXT_PUBLIC_`을 붙이지 않습니다. 키는 소스·채팅·Git에 올리지 않습니다. `.env.local`은 추적에서 제외됩니다.
 - 설정 후 개발 서버를 재시작합니다. 배포 환경에서는 호스팅 서비스의 환경 변수에도 별도로 설정해야 합니다.
+- HTTP로 연 서버(예: `http://공인IP:3000`)에서도 결제를 시작할 수 있습니다. 결제 요청 번호는 `crypto.randomUUID()`가 없으면 `crypto.getRandomValues()`로 같은 UUID v4 형식을 만듭니다(`createCheckoutRequestId.ts`). 다만 로그인·결제 정보 보호를 위해 배포 서버에는 HTTPS 적용을 권장합니다.
 
 ## 2. 데이터베이스 적용
 
