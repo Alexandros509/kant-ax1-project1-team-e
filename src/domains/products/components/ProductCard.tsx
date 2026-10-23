@@ -28,9 +28,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     const hoverImageUrl = product.images.find(
         (image) => image.location === 'product_desc' && image.url,
     )?.url;
-    // 판매가가 정가보다 낮으면 할인 상품으로 판단합니다.
-    // 현재 의도한 표시 방식은 할인 상품의 정가만 노출하는 것이며 판매가는 표시하지 않습니다.
-    const isDiscounted = product.salePrice < product.listPrice;
 
     // 카드 전체가 링크입니다. 상세 주소는 상품 ID로 만들며 상세 페이지 구현은 추후 작업입니다.
     // prefetch={false}는 이 링크의 자동 사전 로딩을 비활성화합니다.
@@ -116,17 +113,15 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </h2>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                     {/*
-                     * 현재 의도에 따라 할인 상품에만 정가(listPrice)를 표시합니다.
-                     * 할인하지 않는 상품은 이 가격 영역에 텍스트가 나타나지 않습니다.
+                     * 할인 여부와 관계없이 모든 상품에 정가(listPrice)를 표시합니다.
+                     * 할인하지 않는 상품은 정가와 판매가가 같습니다.
                      * formatPrice는 숫자를 천 단위 콤마와 '원'이 붙은 문자열로 변환합니다.
                      * sr-only의 '정가'는 화면에서는 숨기되 스크린 리더가 읽을 수 있게 합니다.
                      */}
-                    {isDiscounted && (
-                        <span className="text-xs">
-                            <span className="sr-only">정가 </span>
-                            {formatPrice(product.listPrice)}
-                        </span>
-                    )}
+                    <span className="text-xs">
+                        <span className="sr-only">정가 </span>
+                        {formatPrice(product.listPrice)}
+                    </span>
                 </div>
             </div>
         </Link>
