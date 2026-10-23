@@ -11,6 +11,7 @@ import {
     preparePayment,
 } from '@/domains/orders/api/tossPayment';
 import type { ShippingDetails } from '@/domains/orders/types/order.types';
+import { createCheckoutRequestId } from '@/domains/orders/utils/createCheckoutRequestId';
 
 import CheckoutForm from '@/domains/orders/components/CheckoutForm';
 import OrderSummary from '@/domains/orders/components/OrderSummary';
@@ -49,7 +50,7 @@ export default function CheckoutPage() {
             await checkCartAvailability(supabase, cartItems);
             const payload = JSON.stringify({ cartItems, shipping });
             if (attempt.current?.payload !== payload) {
-                attempt.current = { payload, key: crypto.randomUUID() };
+                attempt.current = { payload, key: createCheckoutRequestId() };
             }
             const order = await preparePayment(
                 cartItems,
