@@ -1,9 +1,6 @@
 import 'server-only';
 
-import {
-    getSupabaseAdminClient,
-    getSupabaseRouteClient,
-} from '@/shared/lib/supabase/server';
+import { getSupabaseRouteClient } from '@/shared/lib/supabase/server';
 import { PaymentError } from './testPaymentValidation';
 import type { StoredPayment } from './paymentWorkflow';
 
@@ -47,13 +44,8 @@ export async function paymentRpc(
     name: string,
     args: Record<string, unknown>,
 ): Promise<StoredPayment> {
-    const client = getSupabaseAdminClient();
-    if (!client)
-        throw new PaymentError(
-            'SUPABASE_SERVER_KEY_REQUIRED',
-            'Supabase 결제 저장 설정이 필요합니다. 관리자에게 문의해 주세요.',
-            503,
-        );
+    // 로그인 회원의 세션으로 호출합니다. DB 함수가 auth.uid()로 회원을 확인합니다.
+    const client = await getSupabaseRouteClient();
     const { data, error } = await client.rpc(name, args);
     if (error) {
         const known = databaseErrors[error.message];

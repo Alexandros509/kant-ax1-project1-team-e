@@ -52,8 +52,7 @@ export async function prepareTestPayment(
             '주문 요청 정보를 확인해 주세요.',
         );
     }
-    const order = await paymentRpc('prepare_test_checkout', {
-        p_user_id: userId,
+    const order = await paymentRpc('prepare_my_test_checkout', {
         p_idempotency_key: data.idempotencyKey,
         p_items: items,
         p_shipping: shipping,
@@ -115,16 +114,15 @@ export async function confirmTestPayment(body: unknown, userId: string) {
         body,
         userId,
         {
-            bind: (uid, input) =>
-                paymentRpc('bind_test_payment', {
-                    p_user_id: uid,
+            // 회원은 DB 함수가 로그인 세션의 auth.uid()로 확인합니다.
+            bind: (_userId, input) =>
+                paymentRpc('bind_my_test_payment', {
                     p_toss_order_id: input.orderId,
                     p_payment_key: input.paymentKey,
                     p_amount: input.amount,
                 }),
-            complete: (uid, input, approval) =>
-                paymentRpc('complete_test_payment', {
-                    p_user_id: uid,
+            complete: (_userId, input, approval) =>
+                paymentRpc('complete_my_test_payment', {
                     p_toss_order_id: input.orderId,
                     p_payment_key: input.paymentKey,
                     p_amount: input.amount,
