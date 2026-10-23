@@ -67,6 +67,14 @@ export default function Header() {
         state.cartItems.reduce((total, item) => total + item.quantity, 0),
     );
     const { user, isLoading } = useAuthUser();
+    const hasHydrated = useCounterStore((state) => state.hasHydrated);
+    const syncCartOwner = useCounterStore((state) => state.syncCartOwner);
+    const userId = user?.id ?? null;
+
+    // 저장된 장바구니를 불러오고 로그인 상태를 확인한 뒤, 회원이 바뀌었으면 장바구니를 비운다.
+    useEffect(() => {
+        if (hasHydrated && !isLoading) syncCartOwner(userId);
+    }, [hasHydrated, isLoading, userId, syncCartOwner]);
 
     return (
         /*

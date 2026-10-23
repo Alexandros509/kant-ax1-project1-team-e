@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { addProductToCart } from './addProductToCart';
 import { cartImagePath } from './cartImagePath';
+import { resolveCartOwner } from './cartOwner';
 import type { ProductDetailData } from '@/domains/products/api/getProductDetail';
 import type { CartItem } from '../types/cart.types';
 
@@ -134,5 +135,26 @@ describe('장바구니 이미지 경로 호환', () => {
                 ),
                 null,
             );
+    });
+});
+
+describe('장바구니 회원 전환', () => {
+    it('비회원이 담은 상품은 로그인해도 유지한다', () => {
+        assert.deepEqual(resolveCartOwner(null, 'user-a'), {
+            ownerId: 'user-a',
+            clear: false,
+        });
+    });
+
+    it('같은 회원이면 유지한다', () => {
+        assert.equal(resolveCartOwner('user-a', 'user-a').clear, false);
+    });
+
+    it('로그아웃하거나 다른 회원으로 바뀌면 비운다', () => {
+        assert.deepEqual(resolveCartOwner('user-a', null), {
+            ownerId: null,
+            clear: true,
+        });
+        assert.equal(resolveCartOwner('user-a', 'user-b').clear, true);
     });
 });
